@@ -1,0 +1,62 @@
+package templates
+
+import "claude-test/internal/domain"
+
+templ HomePage(user *domain.User) {
+	@Layout("Home") {
+		<div class="page-header d-print-none">
+			<div class="row align-items-center">
+				<div class="col-auto">
+					<h2 class="page-title">Welcome</h2>
+				</div>
+			</div>
+		</div>
+		<div class="card mt-3">
+			<div class="card-body">
+				if user != nil {
+					<div class="mb-3">
+						<h3>Hello, { user.Name }!</h3>
+						<p class="text-secondary">You are logged in as { user.Email }</p>
+					</div>
+					<div class="btn-list">
+						<a href="/web/users" class="btn btn-primary">
+							<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+								<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+								<circle cx="12" cy="7" r="4"></circle>
+								<path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>
+							</svg>
+							Manage Users
+						</a>
+						<a href="/web/roles" class="btn btn-secondary">
+							<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+								<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+								<path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"></path>
+							</svg>
+							Manage Roles
+						</a>
+						<a href="/logout" class="btn btn-outline-danger">
+							<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+								<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+								<path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"></path>
+								<path d="M7 12h14l-3 -3m0 6l3 -3"></path>
+							</svg>
+							Logout
+						</a>
+					</div>
+				} else {
+					<div class="mb-3">
+						<h3>Welcome to Admin Panel</h3>
+						<p class="text-secondary">Please sign in to continue</p>
+					</div>
+					<a href="/auth/google" class="btn btn-primary">
+						<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+							<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+							<path d="M17.788 5.108a9 9 0 1 0 3.212 6.892h-8"></path>
+						</svg>
+						Sign in with Google
+					</a>
+				}
+			</div>
+		</div>
+	}
+}

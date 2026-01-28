@@ -1,0 +1,125 @@
+package templates
+
+import (
+	"claude-test/internal/domain"
+	"fmt"
+)
+
+templ RolesPage(roles []*domain.Role) {
+	@Layout("Roles") {
+		<div class="page-header d-print-none">
+			<div class="row align-items-center">
+				<div class="col-auto">
+					<h2 class="page-title">Roles</h2>
+				</div>
+				<div class="col-auto ms-auto">
+					<a href="/web/roles/new" class="btn btn-primary">
+						<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+							<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+							<line x1="12" y1="5" x2="12" y2="19"></line>
+							<line x1="5" y1="12" x2="19" y2="12"></line>
+						</svg>
+						Add Role
+					</a>
+				</div>
+			</div>
+		</div>
+		<div class="card mt-3">
+			<div class="table-responsive">
+				<table class="table table-vcenter card-table">
+					<thead>
+						<tr>
+							<th>ID</th>
+							<th>Name</th>
+							<th>Description</th>
+							<th class="w-1">Actions</th>
+						</tr>
+					</thead>
+					<tbody id="roles-table">
+						for _, role := range roles {
+							@RoleRow(role)
+						}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	}
+}
+
+templ RoleRow(role *domain.Role) {
+	<tr id={ fmt.Sprintf("role-%d", role.ID) }>
+		<td>{ fmt.Sprintf("%d", role.ID) }</td>
+		<td>
+			<a href={ templ.SafeURL(fmt.Sprintf("/web/roles/%d/edit", role.ID)) } class="text-reset">{ role.Name }</a>
+		</td>
+		<td class="text-secondary">{ role.Description }</td>
+		<td>
+			<div class="btn-list flex-nowrap">
+				<a href={ templ.SafeURL(fmt.Sprintf("/web/roles/%d/edit", role.ID)) } class="btn btn-sm">Edit</a>
+				<button
+					class="btn btn-sm btn-danger"
+					hx-delete={ fmt.Sprintf("/web/roles/%d", role.ID) }
+					hx-target={ fmt.Sprintf("#role-%d", role.ID) }
+					hx-swap="outerHTML"
+					hx-confirm="Are you sure you want to delete this role?"
+				>
+					Delete
+				</button>
+			</div>
+		</td>
+	</tr>
+}
+
+templ RoleForm(role *domain.Role, isEdit bool, err string) {
+	@Layout(roleFormTitle(isEdit)) {
+		<div class="page-header d-print-none">
+			<div class="row align-items-center">
+				<div class="col-auto">
+					<h2 class="page-title">{ roleFormTitle(isEdit) }</h2>
+				</div>
+			</div>
+		</div>
+		<div class="card mt-3">
+			<div class="card-body">
+				if err != "" {
+					<div class="alert alert-danger" role="alert">{ err }</div>
+				}
+				<form
+					if isEdit {
+						hx-put={ fmt.Sprintf("/web/roles/%d", role.ID) }
+					} else {
+						hx-post="/web/roles"
+					}
+					hx-target="body"
+					hx-swap="innerHTML"
+				>
+					<div class="mb-3">
+						<label class="form-label required" for="name">Name</label>
+						<input type="text" class="form-control" id="name" name="name" value={ role.Name } required/>
+					</div>
+					<div class="mb-3">
+						<label class="form-label" for="description">Description</label>
+						<input type="text" class="form-control" id="description" name="description" value={ role.Description }/>
+					</div>
+					<div class="mb-0">
+						<button type="submit" class="btn btn-primary">
+							if isEdit {
+								Update
+							} else {
+								Create
+							}
+						</button>
+						<a href="/web/roles" class="btn btn-outline-secondary ms-2">Cancel</a>
+					</div>
+				</form>
+			</div>
+		</div>
+	}
+}
+
+func roleFormTitle(isEdit bool) string {
+	if isEdit {
+		return "Edit Role"
+	}
+	return "New Role"
+}
