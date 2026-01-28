@@ -28,6 +28,10 @@ func NewRouteHandler() *RouteHandler {
 	return &RouteHandler{router: r}
 }
 
+func (h *RouteHandler) Router() chi.Router {
+	return h.router
+}
+
 func (h *RouteHandler) AddRoute(reg RouteRegistrar) {
 	reg.RegisterRoutes(h.router)
 }

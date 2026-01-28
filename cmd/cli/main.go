@@ -49,6 +49,11 @@ func main() {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)
 			os.Exit(1)
 		}
+	case "policy":
+		if err := policyCmd(db, args); err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			os.Exit(1)
+		}
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", command)
 		printUsage()
@@ -62,6 +67,7 @@ func printUsage() {
 	fmt.Println("Commands:")
 	fmt.Println("  user    Manage users")
 	fmt.Println("  role    Manage roles and user role assignments")
+	fmt.Println("  policy  Manage authorization policies (Casbin)")
 	fmt.Println()
 	fmt.Println("Examples:")
 	fmt.Println("  cli user list")
@@ -78,4 +84,10 @@ func printUsage() {
 	fmt.Println("  cli role assign --user-id 1 --role-ids 1,2")
 	fmt.Println("  cli role remove --user-id 1")
 	fmt.Println("  cli role user-roles --user-id 1")
+	fmt.Println()
+	fmt.Println("  cli policy list")
+	fmt.Println("  cli policy init")
+	fmt.Println("  cli policy add --role Admin --resource /web/users --action read")
+	fmt.Println("  cli policy remove --role Admin --resource /web/users --action read")
+	fmt.Println("  cli policy check --role Admin --resource /web/users --action read")
 }

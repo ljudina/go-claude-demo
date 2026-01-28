@@ -1,0 +1,137 @@
+package templates
+
+import (
+	"claude-test/internal/domain"
+	"fmt"
+	"net/url"
+)
+
+templ PoliciesPage(policies []*domain.Policy, roles []*domain.Role, auth *AuthInfo) {
+	@Layout("Policies", auth) {
+		<div class="page-header d-print-none">
+			<div class="row align-items-center">
+				<div class="col-auto">
+					<h2 class="page-title">Policies</h2>
+				</div>
+				<div class="col-auto ms-auto">
+					<a href="/web/policies/new" class="btn btn-primary">
+						<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+							<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+							<line x1="12" y1="5" x2="12" y2="19"></line>
+							<line x1="5" y1="12" x2="19" y2="12"></line>
+						</svg>
+						Add Policy
+					</a>
+				</div>
+			</div>
+		</div>
+		<div class="card mt-3">
+			<div class="table-responsive">
+				<table class="table table-vcenter card-table">
+					<thead>
+						<tr>
+							<th>Role</th>
+							<th>Resource</th>
+							<th>Action</th>
+							<th class="w-1">Actions</th>
+						</tr>
+					</thead>
+					<tbody id="policies-table">
+						for _, policy := range policies {
+							@PolicyRow(policy)
+						}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	}
+}
+
+templ PolicyRow(policy *domain.Policy) {
+	<tr id={ policyRowID(policy) }>
+		<td>
+			<span class="badge bg-blue-lt">{ policy.Role }</span>
+		</td>
+		<td><code>{ policy.Resource }</code></td>
+		<td>
+			if policy.Action == "read" {
+				<span class="badge bg-green-lt">read</span>
+			} else if policy.Action == "write" {
+				<span class="badge bg-orange-lt">write</span>
+			} else {
+				<span class="badge bg-secondary-lt">{ policy.Action }</span>
+			}
+		</td>
+		<td>
+			<button
+				class="btn btn-sm btn-danger"
+				hx-delete="/web/policies"
+				hx-vals={ policyDeleteVals(policy) }
+				hx-target={ "#" + policyRowID(policy) }
+				hx-swap="outerHTML"
+				hx-confirm="Are you sure you want to delete this policy?"
+			>
+				Delete
+			</button>
+		</td>
+	</tr>
+}
+
+templ PolicyForm(policy *domain.Policy, roles []*domain.Role, err string, auth *AuthInfo) {
+	@Layout("New Policy", auth) {
+		<div class="page-header d-print-none">
+			<div class="row align-items-center">
+				<div class="col-auto">
+					<h2 class="page-title">New Policy</h2>
+				</div>
+			</div>
+		</div>
+		<div class="card mt-3">
+			<div class="card-body">
+				if err != "" {
+					<div class="alert alert-danger" role="alert">{ err }</div>
+				}
+				<form hx-post="/web/policies" hx-target="body" hx-swap="innerHTML">
+					<div class="mb-3">
+						<label class="form-label required" for="role">Role</label>
+						<select class="form-select" id="role" name="role" required>
+							<option value="">Select a role...</option>
+							for _, role := range roles {
+								<option value={ role.Name } selected?={ role.Name == policy.Role }>{ role.Name }</option>
+							}
+						</select>
+					</div>
+					<div class="mb-3">
+						<label class="form-label required" for="resource">Resource</label>
+						<input type="text" class="form-control" id="resource" name="resource" value={ policy.Resource } placeholder="/web/users or /api/users/*" required/>
+						<small class="form-hint">Use * as wildcard for path segments, e.g., /web/users/* or /api/*</small>
+					</div>
+					<div class="mb-3">
+						<label class="form-label required" for="action">Action</label>
+						<select class="form-select" id="action" name="action" required>
+							<option value="">Select an action...</option>
+							<option value="read" selected?={ policy.Action == "read" }>Read</option>
+							<option value="write" selected?={ policy.Action == "write" }>Write</option>
+						</select>
+					</div>
+					<div class="mb-0">
+						<button type="submit" class="btn btn-primary">Create</button>
+						<a href="/web/policies" class="btn btn-outline-secondary ms-2">Cancel</a>
+					</div>
+				</form>
+			</div>
+		</div>
+	}
+}
+
+func policyRowID(policy *domain.Policy) string {
+	return fmt.Sprintf("policy-%s-%s-%s",
+		url.QueryEscape(policy.Role),
+		url.QueryEscape(policy.Resource),
+		url.QueryEscape(policy.Action))
+}
+
+func policyDeleteVals(policy *domain.Policy) string {
+	return fmt.Sprintf(`{"role":"%s","resource":"%s","action":"%s"}`,
+		policy.Role, policy.Resource, policy.Action)
+}
