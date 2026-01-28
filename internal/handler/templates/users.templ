@@ -10,8 +10,8 @@ type UserWithRoles struct {
 	Roles []*domain.Role
 }
 
-templ UsersPage(users []UserWithRoles) {
-	@Layout("Users") {
+templ UsersPage(users []UserWithRoles, auth *AuthInfo) {
+	@Layout("Users", auth) {
 		<div class="page-header d-print-none">
 			<div class="row align-items-center">
 				<div class="col-auto">
@@ -81,8 +81,8 @@ templ UserRow(u UserWithRoles) {
 	</tr>
 }
 
-templ UserForm(user *domain.User, userRoleIDs []int64, allRoles []*domain.Role, isEdit bool, err string) {
-	@Layout(formTitle(isEdit)) {
+templ UserForm(user *domain.User, userRoleIDs []int64, allRoles []*domain.Role, isEdit bool, err string, auth *AuthInfo) {
+	@Layout(formTitle(isEdit), auth) {
 		<div class="page-header d-print-none">
 			<div class="row align-items-center">
 				<div class="col-auto">

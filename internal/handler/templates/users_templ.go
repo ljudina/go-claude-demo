@@ -18,7 +18,7 @@ type UserWithRoles struct {
 	Roles []*domain.Role
 }
 
-func UsersPage(users []UserWithRoles) templ.Component {
+func UsersPage(users []UserWithRoles, auth *AuthInfo) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -67,7 +67,7 @@ func UsersPage(users []UserWithRoles) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Layout("Users").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Layout("Users", auth).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -231,7 +231,7 @@ func UserRow(u UserWithRoles) templ.Component {
 	})
 }
 
-func UserForm(user *domain.User, userRoleIDs []int64, allRoles []*domain.Role, isEdit bool, err string) templ.Component {
+func UserForm(user *domain.User, userRoleIDs []int64, allRoles []*domain.Role, isEdit bool, err string, auth *AuthInfo) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -421,7 +421,7 @@ func UserForm(user *domain.User, userRoleIDs []int64, allRoles []*domain.Role, i
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Layout(formTitle(isEdit)).Render(templ.WithChildren(ctx, templ_7745c5c3_Var14), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Layout(formTitle(isEdit), auth).Render(templ.WithChildren(ctx, templ_7745c5c3_Var14), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

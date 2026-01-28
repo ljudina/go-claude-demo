@@ -5,8 +5,8 @@ import (
 	"fmt"
 )
 
-templ RolesPage(roles []*domain.Role) {
-	@Layout("Roles") {
+templ RolesPage(roles []*domain.Role, auth *AuthInfo) {
+	@Layout("Roles", auth) {
 		<div class="page-header d-print-none">
 			<div class="row align-items-center">
 				<div class="col-auto">
@@ -70,8 +70,8 @@ templ RoleRow(role *domain.Role) {
 	</tr>
 }
 
-templ RoleForm(role *domain.Role, isEdit bool, err string) {
-	@Layout(roleFormTitle(isEdit)) {
+templ RoleForm(role *domain.Role, isEdit bool, err string, auth *AuthInfo) {
+	@Layout(roleFormTitle(isEdit), auth) {
 		<div class="page-header d-print-none">
 			<div class="row align-items-center">
 				<div class="col-auto">

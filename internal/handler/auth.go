@@ -54,7 +54,24 @@ func (h *AuthHandler) Home(w http.ResponseWriter, r *http.Request) {
 	session, _ := h.store.Get(r, "auth-session")
 	user, _ := session.Values["user"].(*domain.User)
 
-	templates.HomePage(user).Render(r.Context(), w)
+	var auth *templates.AuthInfo
+	if user != nil {
+		roles, _ := h.roleRepo.GetUserRoles(r.Context(), user.ID)
+		isAdmin := false
+		for _, role := range roles {
+			if role.Name == "Admin" {
+				isAdmin = true
+				break
+			}
+		}
+		auth = &templates.AuthInfo{
+			User:    user,
+			Roles:   roles,
+			IsAdmin: isAdmin,
+		}
+	}
+
+	templates.HomePage(user, auth).Render(r.Context(), w)
 }
 
 func (h *AuthHandler) BeginAuth(w http.ResponseWriter, r *http.Request) {

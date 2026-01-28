@@ -14,12 +14,14 @@ import (
 type WebHandler struct {
 	userService *service.UserService
 	roleService *service.RoleService
+	authHandler *AuthHandler
 }
 
-func NewWebHandler(userService *service.UserService, roleService *service.RoleService) *WebHandler {
+func NewWebHandler(userService *service.UserService, roleService *service.RoleService, authHandler *AuthHandler) *WebHandler {
 	return &WebHandler{
 		userService: userService,
 		roleService: roleService,
+		authHandler: authHandler,
 	}
 }
 
@@ -34,7 +36,31 @@ func (h *WebHandler) RegisterRoutes(r chi.Router) {
 	})
 }
 
+func (h *WebHandler) getAuthInfo(r *http.Request) *templates.AuthInfo {
+	user := h.authHandler.GetCurrentUser(r)
+	if user == nil {
+		return nil
+	}
+
+	roles, _ := h.roleService.GetUserRoles(r.Context(), user.ID)
+	isAdmin := false
+	for _, role := range roles {
+		if role.Name == "Admin" {
+			isAdmin = true
+			break
+		}
+	}
+
+	return &templates.AuthInfo{
+		User:    user,
+		Roles:   roles,
+		IsAdmin: isAdmin,
+	}
+}
+
 func (h *WebHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
+	auth := h.getAuthInfo(r)
+
 	users, err := h.userService.List(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -50,18 +76,21 @@ func (h *WebHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	templates.UsersPage(usersWithRoles).Render(r.Context(), w)
+	templates.UsersPage(usersWithRoles, auth).Render(r.Context(), w)
 }
 
 func (h *WebHandler) NewUserForm(w http.ResponseWriter, r *http.Request) {
+	auth := h.getAuthInfo(r)
 	allRoles, _ := h.roleService.List(r.Context())
-	templates.UserForm(&domain.User{}, nil, allRoles, false, "").Render(r.Context(), w)
+	templates.UserForm(&domain.User{}, nil, allRoles, false, "", auth).Render(r.Context(), w)
 }
 
 func (h *WebHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+	auth := h.getAuthInfo(r)
+
 	if err := r.ParseForm(); err != nil {
 		allRoles, _ := h.roleService.List(r.Context())
-		templates.UserForm(&domain.User{}, nil, allRoles, false, "Invalid form data").Render(r.Context(), w)
+		templates.UserForm(&domain.User{}, nil, allRoles, false, "Invalid form data", auth).Render(r.Context(), w)
 		return
 	}
 
@@ -72,7 +101,7 @@ func (h *WebHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	user, err := h.userService.Create(r.Context(), email, name)
 	if err != nil {
 		allRoles, _ := h.roleService.List(r.Context())
-		templates.UserForm(&domain.User{Email: email, Name: name}, roleIDs, allRoles, false, err.Error()).Render(r.Context(), w)
+		templates.UserForm(&domain.User{Email: email, Name: name}, roleIDs, allRoles, false, err.Error(), auth).Render(r.Context(), w)
 		return
 	}
 
@@ -84,6 +113,8 @@ func (h *WebHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *WebHandler) EditUserForm(w http.ResponseWriter, r *http.Request) {
+	auth := h.getAuthInfo(r)
+
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
@@ -103,10 +134,12 @@ func (h *WebHandler) EditUserForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	allRoles, _ := h.roleService.List(r.Context())
-	templates.UserForm(user, userRoleIDs, allRoles, true, "").Render(r.Context(), w)
+	templates.UserForm(user, userRoleIDs, allRoles, true, "", auth).Render(r.Context(), w)
 }
 
 func (h *WebHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	auth := h.getAuthInfo(r)
+
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
@@ -115,7 +148,7 @@ func (h *WebHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	if err := r.ParseForm(); err != nil {
 		allRoles, _ := h.roleService.List(r.Context())
-		templates.UserForm(&domain.User{ID: id}, nil, allRoles, true, "Invalid form data").Render(r.Context(), w)
+		templates.UserForm(&domain.User{ID: id}, nil, allRoles, true, "Invalid form data", auth).Render(r.Context(), w)
 		return
 	}
 
@@ -126,7 +159,7 @@ func (h *WebHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	_, err = h.userService.Update(r.Context(), id, email, name)
 	if err != nil {
 		allRoles, _ := h.roleService.List(r.Context())
-		templates.UserForm(&domain.User{ID: id, Email: email, Name: name}, roleIDs, allRoles, true, err.Error()).Render(r.Context(), w)
+		templates.UserForm(&domain.User{ID: id, Email: email, Name: name}, roleIDs, allRoles, true, err.Error(), auth).Render(r.Context(), w)
 		return
 	}
 

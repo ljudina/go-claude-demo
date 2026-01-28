@@ -31,7 +31,9 @@ func main() {
 	}
 
 	userRepo := repository.NewUserRepository(db)
+	roleRepo := repository.NewRoleRepository(db)
 	userService := service.NewUserService(userRepo)
+	roleService := service.NewRoleService(roleRepo)
 
 	command := os.Args[1]
 	args := os.Args[2:]
@@ -39,6 +41,11 @@ func main() {
 	switch command {
 	case "user":
 		if err := userCmd(userService, args); err != nil {
+			fmt.Fprintf(os.Stderr, "error: %v\n", err)
+			os.Exit(1)
+		}
+	case "role":
+		if err := roleCmd(roleService, userService, args); err != nil {
 			fmt.Fprintf(os.Stderr, "error: %v\n", err)
 			os.Exit(1)
 		}
@@ -54,6 +61,7 @@ func printUsage() {
 	fmt.Println()
 	fmt.Println("Commands:")
 	fmt.Println("  user    Manage users")
+	fmt.Println("  role    Manage roles and user role assignments")
 	fmt.Println()
 	fmt.Println("Examples:")
 	fmt.Println("  cli user list")
@@ -61,4 +69,13 @@ func printUsage() {
 	fmt.Println("  cli user get --id 1")
 	fmt.Println("  cli user update --id 1 --email new@example.com --name \"Jane Doe\"")
 	fmt.Println("  cli user delete --id 1")
+	fmt.Println()
+	fmt.Println("  cli role list")
+	fmt.Println("  cli role create --name admin --description \"Administrator role\"")
+	fmt.Println("  cli role get --id 1")
+	fmt.Println("  cli role update --id 1 --name \"Admin\" --description \"Updated\"")
+	fmt.Println("  cli role delete --id 1")
+	fmt.Println("  cli role assign --user-id 1 --role-ids 1,2")
+	fmt.Println("  cli role remove --user-id 1")
+	fmt.Println("  cli role user-roles --user-id 1")
 }

@@ -13,10 +13,14 @@ import (
 
 type RoleWebHandler struct {
 	roleService *service.RoleService
+	authHandler *AuthHandler
 }
 
-func NewRoleWebHandler(roleService *service.RoleService) *RoleWebHandler {
-	return &RoleWebHandler{roleService: roleService}
+func NewRoleWebHandler(roleService *service.RoleService, authHandler *AuthHandler) *RoleWebHandler {
+	return &RoleWebHandler{
+		roleService: roleService,
+		authHandler: authHandler,
+	}
 }
 
 func (h *RoleWebHandler) RegisterRoutes(r chi.Router) {
@@ -30,22 +34,49 @@ func (h *RoleWebHandler) RegisterRoutes(r chi.Router) {
 	})
 }
 
+func (h *RoleWebHandler) getAuthInfo(r *http.Request) *templates.AuthInfo {
+	user := h.authHandler.GetCurrentUser(r)
+	if user == nil {
+		return nil
+	}
+
+	roles, _ := h.roleService.GetUserRoles(r.Context(), user.ID)
+	isAdmin := false
+	for _, role := range roles {
+		if role.Name == "Admin" {
+			isAdmin = true
+			break
+		}
+	}
+
+	return &templates.AuthInfo{
+		User:    user,
+		Roles:   roles,
+		IsAdmin: isAdmin,
+	}
+}
+
 func (h *RoleWebHandler) ListRoles(w http.ResponseWriter, r *http.Request) {
+	auth := h.getAuthInfo(r)
+
 	roles, err := h.roleService.List(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	templates.RolesPage(roles).Render(r.Context(), w)
+	templates.RolesPage(roles, auth).Render(r.Context(), w)
 }
 
 func (h *RoleWebHandler) NewRoleForm(w http.ResponseWriter, r *http.Request) {
-	templates.RoleForm(&domain.Role{}, false, "").Render(r.Context(), w)
+	auth := h.getAuthInfo(r)
+	templates.RoleForm(&domain.Role{}, false, "", auth).Render(r.Context(), w)
 }
 
 func (h *RoleWebHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
+	auth := h.getAuthInfo(r)
+
 	if err := r.ParseForm(); err != nil {
-		templates.RoleForm(&domain.Role{}, false, "Invalid form data").Render(r.Context(), w)
+		templates.RoleForm(&domain.Role{}, false, "Invalid form data", auth).Render(r.Context(), w)
 		return
 	}
 
@@ -54,7 +85,7 @@ func (h *RoleWebHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 
 	_, err := h.roleService.Create(r.Context(), name, description)
 	if err != nil {
-		templates.RoleForm(&domain.Role{Name: name, Description: description}, false, err.Error()).Render(r.Context(), w)
+		templates.RoleForm(&domain.Role{Name: name, Description: description}, false, err.Error(), auth).Render(r.Context(), w)
 		return
 	}
 
@@ -62,6 +93,8 @@ func (h *RoleWebHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *RoleWebHandler) EditRoleForm(w http.ResponseWriter, r *http.Request) {
+	auth := h.getAuthInfo(r)
+
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid role ID", http.StatusBadRequest)
@@ -74,10 +107,12 @@ func (h *RoleWebHandler) EditRoleForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	templates.RoleForm(role, true, "").Render(r.Context(), w)
+	templates.RoleForm(role, true, "", auth).Render(r.Context(), w)
 }
 
 func (h *RoleWebHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
+	auth := h.getAuthInfo(r)
+
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid role ID", http.StatusBadRequest)
@@ -85,7 +120,7 @@ func (h *RoleWebHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := r.ParseForm(); err != nil {
-		templates.RoleForm(&domain.Role{ID: id}, true, "Invalid form data").Render(r.Context(), w)
+		templates.RoleForm(&domain.Role{ID: id}, true, "Invalid form data", auth).Render(r.Context(), w)
 		return
 	}
 
@@ -94,7 +129,7 @@ func (h *RoleWebHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 
 	_, err = h.roleService.Update(r.Context(), id, name, description)
 	if err != nil {
-		templates.RoleForm(&domain.Role{ID: id, Name: name, Description: description}, true, err.Error()).Render(r.Context(), w)
+		templates.RoleForm(&domain.Role{ID: id, Name: name, Description: description}, true, err.Error(), auth).Render(r.Context(), w)
 		return
 	}
 

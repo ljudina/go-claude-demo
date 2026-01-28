@@ -1,6 +1,14 @@
 package templates
 
-templ Layout(title string) {
+import "claude-test/internal/domain"
+
+type AuthInfo struct {
+	User    *domain.User
+	Roles   []*domain.Role
+	IsAdmin bool
+}
+
+templ Layout(title string, auth *AuthInfo) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -18,7 +26,9 @@ templ Layout(title string) {
 		<body class="layout-fluid">
 			<script src="/static/js/tabler-theme.min.js"></script>
 			<div class="page">
-				@Nav()
+				if auth != nil && auth.User != nil && auth.IsAdmin {
+					@Nav(auth)
+				}
 				<div class="page-wrapper">
 					<div class="page-body">
 						<div class="container-xl">
@@ -32,7 +42,7 @@ templ Layout(title string) {
 	</html>
 }
 
-templ Nav() {
+templ Nav(auth *AuthInfo) {
 	<header class="navbar navbar-expand-md d-print-none">
 		<div class="container-xl">
 			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,30 +56,71 @@ templ Nav() {
 			<div class="collapse navbar-collapse" id="navbar-menu">
 				<div class="d-flex flex-column flex-md-row flex-fill align-items-stretch align-items-md-center">
 					<ul class="navbar-nav">
+						<!-- Dashboard -->
 						<li class="nav-item">
-							<a class="nav-link" href="/web/users">
+							<a class="nav-link" href="/">
 								<span class="nav-link-icon d-md-none d-lg-inline-block">
 									<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+										<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+										<path d="M5 12l-2 0l9 -9l9 9l-2 0"></path>
+										<path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"></path>
+										<path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"></path>
+									</svg>
+								</span>
+								<span class="nav-link-title">Home</span>
+							</a>
+						</li>
+						<!-- Administration Dropdown -->
+						<li class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle" href="#navbar-admin" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
+								<span class="nav-link-icon d-md-none d-lg-inline-block">
+									<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+										<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+										<path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z"></path>
+										<path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path>
+									</svg>
+								</span>
+								<span class="nav-link-title">Administration</span>
+							</a>
+							<div class="dropdown-menu">
+								<span class="dropdown-header">User Management</span>
+								<a class="dropdown-item" href="/web/users">
+									<svg xmlns="http://www.w3.org/2000/svg" class="icon dropdown-item-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
 										<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
 										<circle cx="12" cy="7" r="4"></circle>
 										<path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>
 									</svg>
-								</span>
-								<span class="nav-link-title">Users</span>
-							</a>
-						</li>
-						<li class="nav-item">
-							<a class="nav-link" href="/web/roles">
-								<span class="nav-link-icon d-md-none d-lg-inline-block">
-									<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+									Users
+								</a>
+								<div class="dropdown-divider"></div>
+								<span class="dropdown-header">Access Control</span>
+								<a class="dropdown-item" href="/web/roles">
+									<svg xmlns="http://www.w3.org/2000/svg" class="icon dropdown-item-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
 										<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
 										<path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"></path>
 									</svg>
-								</span>
-								<span class="nav-link-title">Roles</span>
-							</a>
+									Roles
+								</a>
+							</div>
 						</li>
 					</ul>
+				</div>
+				<!-- User menu on the right -->
+				<div class="navbar-nav flex-row order-md-last">
+					<div class="nav-item dropdown">
+						<a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Open user menu">
+							<span class="avatar avatar-sm bg-primary-lt">{ string(auth.User.Name[0]) }</span>
+							<div class="d-none d-xl-block ps-2">
+								<div>{ auth.User.Name }</div>
+								<div class="mt-1 small text-secondary">{ auth.User.Email }</div>
+							</div>
+						</a>
+						<div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+							<a href="/" class="dropdown-item">Profile</a>
+							<div class="dropdown-divider"></div>
+							<a href="/logout" class="dropdown-item text-danger">Logout</a>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>

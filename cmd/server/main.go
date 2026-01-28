@@ -44,16 +44,10 @@ func main() {
 
 	// Auth handler
 	sessionSecret := os.Getenv("SESSION_SECRET")
-	if sessionSecret == "" {
-		sessionSecret = "default-secret-change-me"
-	}
 	authHandler := handler.NewAuthHandler(userService, roleRepo, sessionSecret)
 
 	// Initialize Google OAuth
 	appURL := os.Getenv("APP_URL")
-	if appURL == "" {
-		appURL = "http://localhost:8080"
-	}
 	authHandler.InitGoth(
 		os.Getenv("GOOGLE_CLIENT_ID"),
 		os.Getenv("GOOGLE_CLIENT_SECRET"),
@@ -62,8 +56,8 @@ func main() {
 
 	userHandler := handler.NewUserHandler(userService)
 	roleHandler := handler.NewRoleHandler(roleService)
-	webHandler := handler.NewWebHandler(userService, roleService)
-	roleWebHandler := handler.NewRoleWebHandler(roleService)
+	webHandler := handler.NewWebHandler(userService, roleService, authHandler)
+	roleWebHandler := handler.NewRoleWebHandler(roleService, authHandler)
 
 	routeHandler := handler.NewRouteHandler()
 	routeHandler.AddRoute(authHandler)
@@ -73,8 +67,5 @@ func main() {
 	routeHandler.AddRoute(roleWebHandler)
 
 	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
 	routeHandler.Start(port)
 }
