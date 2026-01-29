@@ -20,6 +20,7 @@ type User struct {
 	Name      string
 	CreatedAt sql.NullTime
 	UpdatedAt sql.NullTime
+	Theme     string
 }
 
 type UserRole struct {

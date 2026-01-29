@@ -67,10 +67,10 @@ func userList(svc *service.UserService) error {
 		return nil
 	}
 
-	fmt.Printf("%-5s %-30s %-30s\n", "ID", "Email", "Name")
-	fmt.Println("----------------------------------------------------------------------")
+	fmt.Printf("%-5s %-30s %-30s %-10s\n", "ID", "Email", "Name", "Theme")
+	fmt.Println("----------------------------------------------------------------------------------")
 	for _, u := range users {
-		fmt.Printf("%-5d %-30s %-30s\n", u.ID, u.Email, u.Name)
+		fmt.Printf("%-5d %-30s %-30s %-10s\n", u.ID, u.Email, u.Name, u.Theme)
 	}
 	return nil
 }
@@ -94,6 +94,7 @@ func userGet(svc *service.UserService, args []string) error {
 	fmt.Printf("ID:        %d\n", user.ID)
 	fmt.Printf("Email:     %s\n", user.Email)
 	fmt.Printf("Name:      %s\n", user.Name)
+	fmt.Printf("Theme:     %s\n", user.Theme)
 	fmt.Printf("Created:   %s\n", user.CreatedAt.Format("2006-01-02 15:04:05"))
 	fmt.Printf("Updated:   %s\n", user.UpdatedAt.Format("2006-01-02 15:04:05"))
 	return nil

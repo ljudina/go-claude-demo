@@ -7,6 +7,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 )
 
 const assignRoleToUser = `-- name: AssignRoleToUser :exec
@@ -73,15 +74,23 @@ WHERE ur.role_id = ?
 ORDER BY u.id
 `
 
-func (q *Queries) GetUsersWithRole(ctx context.Context, roleID int64) ([]User, error) {
+type GetUsersWithRoleRow struct {
+	ID        int64
+	Email     string
+	Name      string
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
+}
+
+func (q *Queries) GetUsersWithRole(ctx context.Context, roleID int64) ([]GetUsersWithRoleRow, error) {
 	rows, err := q.db.QueryContext(ctx, getUsersWithRole, roleID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []User
+	var items []GetUsersWithRoleRow
 	for rows.Next() {
-		var i User
+		var i GetUsersWithRoleRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Email,

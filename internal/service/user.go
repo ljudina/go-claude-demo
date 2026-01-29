@@ -66,3 +66,10 @@ func (s *UserService) Update(ctx context.Context, id int64, email, name string) 
 func (s *UserService) Delete(ctx context.Context, id int64) error {
 	return s.repo.Delete(ctx, id)
 }
+
+func (s *UserService) UpdateTheme(ctx context.Context, id int64, theme string) (*domain.User, error) {
+	if theme != "light" && theme != "dark" {
+		theme = "light"
+	}
+	return s.repo.UpdateTheme(ctx, id, theme)
+}

@@ -7,26 +7,38 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (email, name, created_at, updated_at)
-VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-RETURNING id, email, name, created_at, updated_at
+INSERT INTO users (email, name, theme, created_at, updated_at)
+VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+RETURNING id, email, name, theme, created_at, updated_at
 `
 
 type CreateUserParams struct {
 	Email string
 	Name  string
+	Theme string
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.Email, arg.Name)
-	var i User
+type CreateUserRow struct {
+	ID        int64
+	Email     string
+	Name      string
+	Theme     string
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
+	row := q.db.QueryRowContext(ctx, createUser, arg.Email, arg.Name, arg.Theme)
+	var i CreateUserRow
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
 		&i.Name,
+		&i.Theme,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -44,18 +56,28 @@ func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, name, created_at, updated_at
+SELECT id, email, name, theme, created_at, updated_at
 FROM users
 WHERE email = ?
 `
 
-func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+type GetUserByEmailRow struct {
+	ID        int64
+	Email     string
+	Name      string
+	Theme     string
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
+}
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
-	var i User
+	var i GetUserByEmailRow
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
 		&i.Name,
+		&i.Theme,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -63,18 +85,28 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, name, created_at, updated_at
+SELECT id, email, name, theme, created_at, updated_at
 FROM users
 WHERE id = ?
 `
 
-func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
+type GetUserByIDRow struct {
+	ID        int64
+	Email     string
+	Name      string
+	Theme     string
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
+}
+
+func (q *Queries) GetUserByID(ctx context.Context, id int64) (GetUserByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserByID, id)
-	var i User
+	var i GetUserByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
 		&i.Name,
+		&i.Theme,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -82,24 +114,34 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, email, name, created_at, updated_at
+SELECT id, email, name, theme, created_at, updated_at
 FROM users
 ORDER BY id
 `
 
-func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
+type ListUsersRow struct {
+	ID        int64
+	Email     string
+	Name      string
+	Theme     string
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
+}
+
+func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
 	rows, err := q.db.QueryContext(ctx, listUsers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []User
+	var items []ListUsersRow
 	for rows.Next() {
-		var i User
+		var i ListUsersRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Email,
 			&i.Name,
+			&i.Theme,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -120,7 +162,7 @@ const updateUser = `-- name: UpdateUser :one
 UPDATE users
 SET email = ?, name = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
-RETURNING id, email, name, created_at, updated_at
+RETURNING id, email, name, theme, created_at, updated_at
 `
 
 type UpdateUserParams struct {
@@ -129,13 +171,58 @@ type UpdateUserParams struct {
 	ID    int64
 }
 
-func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
+type UpdateUserRow struct {
+	ID        int64
+	Email     string
+	Name      string
+	Theme     string
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error) {
 	row := q.db.QueryRowContext(ctx, updateUser, arg.Email, arg.Name, arg.ID)
-	var i User
+	var i UpdateUserRow
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
 		&i.Name,
+		&i.Theme,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateUserTheme = `-- name: UpdateUserTheme :one
+UPDATE users
+SET theme = ?, updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
+RETURNING id, email, name, theme, created_at, updated_at
+`
+
+type UpdateUserThemeParams struct {
+	Theme string
+	ID    int64
+}
+
+type UpdateUserThemeRow struct {
+	ID        int64
+	Email     string
+	Name      string
+	Theme     string
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
+}
+
+func (q *Queries) UpdateUserTheme(ctx context.Context, arg UpdateUserThemeParams) (UpdateUserThemeRow, error) {
+	row := q.db.QueryRowContext(ctx, updateUserTheme, arg.Theme, arg.ID)
+	var i UpdateUserThemeRow
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Name,
+		&i.Theme,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

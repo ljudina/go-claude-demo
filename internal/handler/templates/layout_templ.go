@@ -16,6 +16,17 @@ type AuthInfo struct {
 	IsAdmin bool
 }
 
+func getTheme(auth *AuthInfo) string {
+	if auth != nil && auth.User != nil && auth.User.Theme != "" {
+		return auth.User.Theme
+	}
+	return ""
+}
+
+func isLoggedIn(auth *AuthInfo) bool {
+	return auth != nil && auth.User != nil
+}
+
 func Layout(title string, auth *AuthInfo) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -37,20 +48,52 @@ func Layout(title string, auth *AuthInfo) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\"><meta http-equiv=\"X-UA-Compatible\" content=\"ie=edge\"><title>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\" data-bs-theme=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
-		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(title)
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(getTheme(auth))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/handler/templates/layout.templ`, Line: 18, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/handler/templates/layout.templ`, Line: 24, Col: 47}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - Admin</title><link href=\"/static/css/tabler.min.css\" rel=\"stylesheet\"><link href=\"/static/css/tabler-vendors.min.css\" rel=\"stylesheet\"><script src=\"https://unpkg.com/htmx.org@2.0.4\"></script><style>\n\t\t\t\t@import url(\"https://rsms.me/inter/inter.css\");\n\t\t\t</style></head><body class=\"layout-fluid\"><script src=\"/static/js/tabler-theme.min.js\"></script><div class=\"page\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" data-logged-in=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var3 string
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(func() string {
+			if isLoggedIn(auth) {
+				return "true"
+			} else {
+				return "false"
+			}
+		}())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/handler/templates/layout.templ`, Line: 24, Col: 148}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\"><meta http-equiv=\"X-UA-Compatible\" content=\"ie=edge\"><title>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var4 string
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(title)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/handler/templates/layout.templ`, Line: 29, Col: 17}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, " - Admin</title><!-- Apply theme early to prevent flash --><script>\n\t\t\t\t(function() {\n\t\t\t\t\tvar isLoggedIn = document.documentElement.getAttribute('data-logged-in') === 'true';\n\t\t\t\t\tvar serverTheme = document.documentElement.getAttribute('data-bs-theme');\n\t\t\t\t\tif (!isLoggedIn && !serverTheme) {\n\t\t\t\t\t\tvar storedTheme = localStorage.getItem('theme') || 'light';\n\t\t\t\t\t\tdocument.documentElement.setAttribute('data-bs-theme', storedTheme);\n\t\t\t\t\t} else if (!serverTheme) {\n\t\t\t\t\t\tdocument.documentElement.setAttribute('data-bs-theme', 'light');\n\t\t\t\t\t}\n\t\t\t\t})();\n\t\t\t</script><link href=\"/static/css/tabler.min.css\" rel=\"stylesheet\"><link href=\"/static/css/tabler-vendors.min.css\" rel=\"stylesheet\"><script src=\"https://unpkg.com/htmx.org@2.0.4\"></script><style>\n\t\t\t\t@import url(\"https://rsms.me/inter/inter.css\");\n\t\t\t\t.theme-toggle-fab {\n\t\t\t\t\tposition: fixed;\n\t\t\t\t\tbottom: 20px;\n\t\t\t\t\tright: 20px;\n\t\t\t\t\tz-index: 1050;\n\t\t\t\t\twidth: 48px;\n\t\t\t\t\theight: 48px;\n\t\t\t\t\tborder-radius: 50%;\n\t\t\t\t\tdisplay: flex;\n\t\t\t\t\talign-items: center;\n\t\t\t\t\tjustify-content: center;\n\t\t\t\t\tbox-shadow: 0 4px 12px rgba(0,0,0,0.15);\n\t\t\t\t\ttransition: transform 0.2s, box-shadow 0.2s;\n\t\t\t\t}\n\t\t\t\t.theme-toggle-fab:hover {\n\t\t\t\t\ttransform: scale(1.1);\n\t\t\t\t\tbox-shadow: 0 6px 16px rgba(0,0,0,0.2);\n\t\t\t\t}\n\t\t\t</style></head><body class=\"layout-fluid\"><div class=\"page\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -60,7 +103,7 @@ func Layout(title string, auth *AuthInfo) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"page-wrapper\"><div class=\"page-body\"><div class=\"container-xl\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"page-wrapper\"><div class=\"page-body\"><div class=\"container-xl\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -68,7 +111,44 @@ func Layout(title string, auth *AuthInfo) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div></div></div></div><script src=\"/static/js/tabler.min.js\"></script></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div></div></div></div><!-- Floating theme toggle button - always visible -->")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = ThemeToggleFAB().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<script src=\"/static/js/tabler.min.js\"></script><script>\n\t\t\t\tfunction getCurrentTheme() {\n\t\t\t\t\treturn document.documentElement.getAttribute('data-bs-theme') || 'light';\n\t\t\t\t}\n\n\t\t\t\tfunction toggleTheme() {\n\t\t\t\t\tvar isLoggedIn = document.documentElement.getAttribute('data-logged-in') === 'true';\n\t\t\t\t\tvar currentTheme = getCurrentTheme();\n\t\t\t\t\tvar newTheme = currentTheme === 'dark' ? 'light' : 'dark';\n\n\t\t\t\t\tif (isLoggedIn) {\n\t\t\t\t\t\t// For logged-in users, call API to persist theme\n\t\t\t\t\t\tfetch('/api/theme', { method: 'PUT' })\n\t\t\t\t\t\t\t.then(function(response) { return response.json(); })\n\t\t\t\t\t\t\t.then(function(data) {\n\t\t\t\t\t\t\t\tdocument.documentElement.setAttribute('data-bs-theme', data.theme);\n\t\t\t\t\t\t\t\tlocalStorage.setItem('theme', data.theme);\n\t\t\t\t\t\t\t\tupdateThemeIcons(data.theme);\n\t\t\t\t\t\t\t})\n\t\t\t\t\t\t\t.catch(function() {\n\t\t\t\t\t\t\t\t// Fallback to local toggle if API fails\n\t\t\t\t\t\t\t\tdocument.documentElement.setAttribute('data-bs-theme', newTheme);\n\t\t\t\t\t\t\t\tlocalStorage.setItem('theme', newTheme);\n\t\t\t\t\t\t\t\tupdateThemeIcons(newTheme);\n\t\t\t\t\t\t\t});\n\t\t\t\t\t} else {\n\t\t\t\t\t\t// For visitors, use localStorage only\n\t\t\t\t\t\tdocument.documentElement.setAttribute('data-bs-theme', newTheme);\n\t\t\t\t\t\tlocalStorage.setItem('theme', newTheme);\n\t\t\t\t\t\tupdateThemeIcons(newTheme);\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\tfunction updateThemeIcons(theme) {\n\t\t\t\t\tvar fabSunIcon = document.getElementById('fab-theme-icon-sun');\n\t\t\t\t\tvar fabMoonIcon = document.getElementById('fab-theme-icon-moon');\n\n\t\t\t\t\tif (theme === 'dark') {\n\t\t\t\t\t\tif (fabSunIcon) fabSunIcon.style.display = 'none';\n\t\t\t\t\t\tif (fabMoonIcon) fabMoonIcon.style.display = 'inline-block';\n\t\t\t\t\t} else {\n\t\t\t\t\t\tif (fabSunIcon) fabSunIcon.style.display = 'inline-block';\n\t\t\t\t\t\tif (fabMoonIcon) fabMoonIcon.style.display = 'none';\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\t// Initialize icons on page load\n\t\t\t\tdocument.addEventListener('DOMContentLoaded', function() {\n\t\t\t\t\tupdateThemeIcons(getCurrentTheme());\n\t\t\t\t});\n\t\t\t</script></body></html>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func ThemeToggleFAB() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var5 == nil {
+			templ_7745c5c3_Var5 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<button type=\"button\" class=\"btn btn-secondary theme-toggle-fab\" onclick=\"toggleTheme()\" title=\"Toggle theme\"><!-- Sun icon (shown in light mode) --><svg id=\"fab-theme-icon-sun\" xmlns=\"http://www.w3.org/2000/svg\" class=\"icon\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" stroke-width=\"2\" stroke=\"currentColor\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"></path> <path d=\"M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0\"></path> <path d=\"M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7\"></path></svg><!-- Moon icon (shown in dark mode) --><svg id=\"fab-theme-icon-moon\" xmlns=\"http://www.w3.org/2000/svg\" class=\"icon\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" stroke-width=\"2\" stroke=\"currentColor\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"display: none;\"><path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"></path> <path d=\"M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z\"></path></svg></button>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -92,51 +172,51 @@ func Nav(auth *AuthInfo) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var3 == nil {
-			templ_7745c5c3_Var3 = templ.NopComponent
+		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var6 == nil {
+			templ_7745c5c3_Var6 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<header class=\"navbar navbar-expand-md d-print-none\"><div class=\"container-xl\"><button class=\"navbar-toggler\" type=\"button\" data-bs-toggle=\"collapse\" data-bs-target=\"#navbar-menu\" aria-controls=\"navbar-menu\" aria-expanded=\"false\" aria-label=\"Toggle navigation\"><span class=\"navbar-toggler-icon\"></span></button><div class=\"navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3\"><a href=\"/\" class=\"text-decoration-none\"><span class=\"h3 mb-0\">Admin Panel</span></a></div><div class=\"collapse navbar-collapse\" id=\"navbar-menu\"><div class=\"d-flex flex-column flex-md-row flex-fill align-items-stretch align-items-md-center\"><ul class=\"navbar-nav\"><!-- Dashboard --><li class=\"nav-item\"><a class=\"nav-link\" href=\"/\"><span class=\"nav-link-icon d-md-none d-lg-inline-block\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"icon\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" stroke-width=\"2\" stroke=\"currentColor\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"></path> <path d=\"M5 12l-2 0l9 -9l9 9l-2 0\"></path> <path d=\"M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7\"></path> <path d=\"M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6\"></path></svg></span> <span class=\"nav-link-title\">Home</span></a></li><!-- Administration Dropdown --><li class=\"nav-item dropdown\"><a class=\"nav-link dropdown-toggle\" href=\"#navbar-admin\" data-bs-toggle=\"dropdown\" data-bs-auto-close=\"outside\" role=\"button\" aria-expanded=\"false\"><span class=\"nav-link-icon d-md-none d-lg-inline-block\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"icon\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" stroke-width=\"2\" stroke=\"currentColor\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"></path> <path d=\"M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z\"></path> <path d=\"M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0\"></path></svg></span> <span class=\"nav-link-title\">Administration</span></a><div class=\"dropdown-menu\"><span class=\"dropdown-header\">User Management</span> <a class=\"dropdown-item\" href=\"/web/users\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"icon dropdown-item-icon\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" stroke-width=\"2\" stroke=\"currentColor\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"></path> <circle cx=\"12\" cy=\"7\" r=\"4\"></circle> <path d=\"M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2\"></path></svg> Users</a><div class=\"dropdown-divider\"></div><span class=\"dropdown-header\">Access Control</span> <a class=\"dropdown-item\" href=\"/web/roles\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"icon dropdown-item-icon\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" stroke-width=\"2\" stroke=\"currentColor\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"></path> <path d=\"M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3\"></path></svg> Roles</a> <a class=\"dropdown-item\" href=\"/web/policies\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"icon dropdown-item-icon\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" stroke-width=\"2\" stroke=\"currentColor\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"></path> <path d=\"M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2\"></path> <path d=\"M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z\"></path> <path d=\"M9 12l.01 0\"></path> <path d=\"M13 12l2 0\"></path> <path d=\"M9 16l.01 0\"></path> <path d=\"M13 16l2 0\"></path></svg> Policies</a></div></li></ul></div><!-- User menu on the right --><div class=\"navbar-nav flex-row order-md-last\"><div class=\"nav-item dropdown\"><a href=\"#\" class=\"nav-link d-flex lh-1 text-reset p-0\" data-bs-toggle=\"dropdown\" aria-label=\"Open user menu\"><span class=\"avatar avatar-sm bg-primary-lt\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<header class=\"navbar navbar-expand-md d-print-none\"><div class=\"container-xl\"><button class=\"navbar-toggler\" type=\"button\" data-bs-toggle=\"collapse\" data-bs-target=\"#navbar-menu\" aria-controls=\"navbar-menu\" aria-expanded=\"false\" aria-label=\"Toggle navigation\"><span class=\"navbar-toggler-icon\"></span></button><div class=\"navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3\"><a href=\"/\" class=\"text-decoration-none\"><span class=\"h3 mb-0\">Admin Panel</span></a></div><div class=\"collapse navbar-collapse\" id=\"navbar-menu\"><div class=\"d-flex flex-column flex-md-row flex-fill align-items-stretch align-items-md-center\"><ul class=\"navbar-nav\"><!-- Dashboard --><li class=\"nav-item\"><a class=\"nav-link\" href=\"/\"><span class=\"nav-link-icon d-md-none d-lg-inline-block\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"icon\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" stroke-width=\"2\" stroke=\"currentColor\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"></path> <path d=\"M5 12l-2 0l9 -9l9 9l-2 0\"></path> <path d=\"M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7\"></path> <path d=\"M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6\"></path></svg></span> <span class=\"nav-link-title\">Home</span></a></li><!-- Administration Dropdown --><li class=\"nav-item dropdown\"><a class=\"nav-link dropdown-toggle\" href=\"#navbar-admin\" data-bs-toggle=\"dropdown\" data-bs-auto-close=\"outside\" role=\"button\" aria-expanded=\"false\"><span class=\"nav-link-icon d-md-none d-lg-inline-block\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"icon\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" stroke-width=\"2\" stroke=\"currentColor\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"></path> <path d=\"M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z\"></path> <path d=\"M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0\"></path></svg></span> <span class=\"nav-link-title\">Administration</span></a><div class=\"dropdown-menu\"><span class=\"dropdown-header\">User Management</span> <a class=\"dropdown-item\" href=\"/web/users\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"icon dropdown-item-icon\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" stroke-width=\"2\" stroke=\"currentColor\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"></path> <circle cx=\"12\" cy=\"7\" r=\"4\"></circle> <path d=\"M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2\"></path></svg> Users</a><div class=\"dropdown-divider\"></div><span class=\"dropdown-header\">Access Control</span> <a class=\"dropdown-item\" href=\"/web/roles\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"icon dropdown-item-icon\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" stroke-width=\"2\" stroke=\"currentColor\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"></path> <path d=\"M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3\"></path></svg> Roles</a> <a class=\"dropdown-item\" href=\"/web/policies\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"icon dropdown-item-icon\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" stroke-width=\"2\" stroke=\"currentColor\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path stroke=\"none\" d=\"M0 0h24v24H0z\" fill=\"none\"></path> <path d=\"M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2\"></path> <path d=\"M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z\"></path> <path d=\"M9 12l.01 0\"></path> <path d=\"M13 12l2 0\"></path> <path d=\"M9 16l.01 0\"></path> <path d=\"M13 16l2 0\"></path></svg> Policies</a></div></li></ul></div><!-- User menu on the right --><div class=\"navbar-nav flex-row order-md-last\"><div class=\"nav-item dropdown\"><a href=\"#\" class=\"nav-link d-flex lh-1 text-reset p-0\" data-bs-toggle=\"dropdown\" aria-label=\"Open user menu\"><span class=\"avatar avatar-sm bg-primary-lt\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(string(auth.User.Name[0]))
+		var templ_7745c5c3_Var7 string
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(string(auth.User.Name[0]))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/handler/templates/layout.templ`, Line: 124, Col: 79}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/handler/templates/layout.templ`, Line: 234, Col: 79}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</span><div class=\"d-none d-xl-block ps-2\"><div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var5 string
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(auth.User.Name)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/handler/templates/layout.templ`, Line: 126, Col: 29}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</span><div class=\"d-none d-xl-block ps-2\"><div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div><div class=\"mt-1 small text-secondary\">")
+		var templ_7745c5c3_Var8 string
+		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(auth.User.Name)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/handler/templates/layout.templ`, Line: 236, Col: 29}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var6 string
-		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(auth.User.Email)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/handler/templates/layout.templ`, Line: 127, Col: 64}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div><div class=\"mt-1 small text-secondary\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div></div></a><div class=\"dropdown-menu dropdown-menu-end dropdown-menu-arrow\"><a href=\"/\" class=\"dropdown-item\">Profile</a><div class=\"dropdown-divider\"></div><a href=\"/logout\" class=\"dropdown-item text-danger\">Logout</a></div></div></div></div></div></header>")
+		var templ_7745c5c3_Var9 string
+		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(auth.User.Email)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/handler/templates/layout.templ`, Line: 237, Col: 64}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></div></a><div class=\"dropdown-menu dropdown-menu-end dropdown-menu-arrow\"><a href=\"/\" class=\"dropdown-item\">Profile</a><div class=\"dropdown-divider\"></div><a href=\"/logout\" class=\"dropdown-item text-danger\">Logout</a></div></div></div></div></div></header>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

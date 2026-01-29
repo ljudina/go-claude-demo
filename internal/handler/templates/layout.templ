@@ -8,23 +8,64 @@ type AuthInfo struct {
 	IsAdmin bool
 }
 
+func getTheme(auth *AuthInfo) string {
+	if auth != nil && auth.User != nil && auth.User.Theme != "" {
+		return auth.User.Theme
+	}
+	return ""
+}
+
+func isLoggedIn(auth *AuthInfo) bool {
+	return auth != nil && auth.User != nil
+}
+
 templ Layout(title string, auth *AuthInfo) {
 	<!DOCTYPE html>
-	<html lang="en">
+	<html lang="en" data-bs-theme={ getTheme(auth) } data-logged-in={ func() string { if isLoggedIn(auth) { return "true" } else { return "false" } }() }>
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 			<meta http-equiv="X-UA-Compatible" content="ie=edge"/>
 			<title>{ title } - Admin</title>
+			<!-- Apply theme early to prevent flash -->
+			<script>
+				(function() {
+					var isLoggedIn = document.documentElement.getAttribute('data-logged-in') === 'true';
+					var serverTheme = document.documentElement.getAttribute('data-bs-theme');
+					if (!isLoggedIn && !serverTheme) {
+						var storedTheme = localStorage.getItem('theme') || 'light';
+						document.documentElement.setAttribute('data-bs-theme', storedTheme);
+					} else if (!serverTheme) {
+						document.documentElement.setAttribute('data-bs-theme', 'light');
+					}
+				})();
+			</script>
 			<link href="/static/css/tabler.min.css" rel="stylesheet"/>
 			<link href="/static/css/tabler-vendors.min.css" rel="stylesheet"/>
 			<script src="https://unpkg.com/htmx.org@2.0.4"></script>
 			<style>
 				@import url("https://rsms.me/inter/inter.css");
+				.theme-toggle-fab {
+					position: fixed;
+					bottom: 20px;
+					right: 20px;
+					z-index: 1050;
+					width: 48px;
+					height: 48px;
+					border-radius: 50%;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+					transition: transform 0.2s, box-shadow 0.2s;
+				}
+				.theme-toggle-fab:hover {
+					transform: scale(1.1);
+					box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+				}
 			</style>
 		</head>
 		<body class="layout-fluid">
-			<script src="/static/js/tabler-theme.min.js"></script>
 			<div class="page">
 				if auth != nil && auth.User != nil && auth.IsAdmin {
 					@Nav(auth)
@@ -37,9 +78,78 @@ templ Layout(title string, auth *AuthInfo) {
 					</div>
 				</div>
 			</div>
+			<!-- Floating theme toggle button - always visible -->
+			@ThemeToggleFAB()
 			<script src="/static/js/tabler.min.js"></script>
+			<script>
+				function getCurrentTheme() {
+					return document.documentElement.getAttribute('data-bs-theme') || 'light';
+				}
+
+				function toggleTheme() {
+					var isLoggedIn = document.documentElement.getAttribute('data-logged-in') === 'true';
+					var currentTheme = getCurrentTheme();
+					var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+					if (isLoggedIn) {
+						// For logged-in users, call API to persist theme
+						fetch('/api/theme', { method: 'PUT' })
+							.then(function(response) { return response.json(); })
+							.then(function(data) {
+								document.documentElement.setAttribute('data-bs-theme', data.theme);
+								localStorage.setItem('theme', data.theme);
+								updateThemeIcons(data.theme);
+							})
+							.catch(function() {
+								// Fallback to local toggle if API fails
+								document.documentElement.setAttribute('data-bs-theme', newTheme);
+								localStorage.setItem('theme', newTheme);
+								updateThemeIcons(newTheme);
+							});
+					} else {
+						// For visitors, use localStorage only
+						document.documentElement.setAttribute('data-bs-theme', newTheme);
+						localStorage.setItem('theme', newTheme);
+						updateThemeIcons(newTheme);
+					}
+				}
+
+				function updateThemeIcons(theme) {
+					var fabSunIcon = document.getElementById('fab-theme-icon-sun');
+					var fabMoonIcon = document.getElementById('fab-theme-icon-moon');
+
+					if (theme === 'dark') {
+						if (fabSunIcon) fabSunIcon.style.display = 'none';
+						if (fabMoonIcon) fabMoonIcon.style.display = 'inline-block';
+					} else {
+						if (fabSunIcon) fabSunIcon.style.display = 'inline-block';
+						if (fabMoonIcon) fabMoonIcon.style.display = 'none';
+					}
+				}
+
+				// Initialize icons on page load
+				document.addEventListener('DOMContentLoaded', function() {
+					updateThemeIcons(getCurrentTheme());
+				});
+			</script>
 		</body>
 	</html>
+}
+
+templ ThemeToggleFAB() {
+	<button type="button" class="btn btn-secondary theme-toggle-fab" onclick="toggleTheme()" title="Toggle theme">
+		<!-- Sun icon (shown in light mode) -->
+		<svg id="fab-theme-icon-sun" xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+			<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+			<path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"></path>
+			<path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"></path>
+		</svg>
+		<!-- Moon icon (shown in dark mode) -->
+		<svg id="fab-theme-icon-moon" xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+			<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+			<path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+		</svg>
+	</button>
 }
 
 templ Nav(auth *AuthInfo) {

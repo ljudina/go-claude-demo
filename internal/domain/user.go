@@ -10,6 +10,7 @@ type User struct {
 	ID        int64
 	Email     string
 	Name      string
+	Theme     string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -30,5 +31,6 @@ type UserRepository interface {
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	List(ctx context.Context) ([]*User, error)
 	Update(ctx context.Context, user *User) (*User, error)
+	UpdateTheme(ctx context.Context, id int64, theme string) (*User, error)
 	Delete(ctx context.Context, id int64) error
 }

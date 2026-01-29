@@ -48,6 +48,7 @@ func (h *AuthHandler) RegisterRoutes(r chi.Router) {
 	r.Get("/auth/{provider}", h.BeginAuth)
 	r.Get("/auth/{provider}/callback", h.Callback)
 	r.Get("/logout", h.Logout)
+	r.Put("/api/theme", h.ToggleTheme)
 }
 
 func (h *AuthHandler) Home(w http.ResponseWriter, r *http.Request) {
@@ -142,4 +143,35 @@ func (h *AuthHandler) GetCurrentUser(r *http.Request) *domain.User {
 		return nil
 	}
 	return user
+}
+
+// ToggleTheme toggles the user's theme between light and dark
+func (h *AuthHandler) ToggleTheme(w http.ResponseWriter, r *http.Request) {
+	session, _ := h.store.Get(r, "auth-session")
+	user, ok := session.Values["user"].(*domain.User)
+	if !ok || user == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Toggle theme
+	newTheme := "dark"
+	if user.Theme == "dark" {
+		newTheme = "light"
+	}
+
+	// Update in database
+	updatedUser, err := h.userService.UpdateTheme(r.Context(), user.ID, newTheme)
+	if err != nil {
+		http.Error(w, "Failed to update theme", http.StatusInternalServerError)
+		return
+	}
+
+	// Update session
+	session.Values["user"] = updatedUser
+	session.Save(r, w)
+
+	// Return the new theme
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(`{"theme":"` + newTheme + `"}`))
 }
