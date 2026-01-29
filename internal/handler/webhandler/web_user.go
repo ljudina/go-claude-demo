@@ -13,16 +13,18 @@ import (
 )
 
 type WebUserHandler struct {
-	userService *service.UserService
-	roleService *service.RoleService
-	authHandler *handler.AuthHandler
+	userService    *service.UserService
+	roleService    *service.RoleService
+	navItemService *service.NavItemService
+	authHandler    *handler.AuthHandler
 }
 
-func NewWebUserHandler(userService *service.UserService, roleService *service.RoleService, authHandler *handler.AuthHandler) *WebUserHandler {
+func NewWebUserHandler(userService *service.UserService, roleService *service.RoleService, navItemService *service.NavItemService, authHandler *handler.AuthHandler) *WebUserHandler {
 	return &WebUserHandler{
-		userService: userService,
-		roleService: roleService,
-		authHandler: authHandler,
+		userService:    userService,
+		roleService:    roleService,
+		navItemService: navItemService,
+		authHandler:    authHandler,
 	}
 }
 
@@ -41,10 +43,13 @@ func (h *WebUserHandler) getAuthInfo(r *http.Request) *templates.AuthInfo {
 		}
 	}
 
+	navItems, _ := h.navItemService.GetMenuForUser(r.Context(), user.ID)
+
 	return &templates.AuthInfo{
-		User:    user,
-		Roles:   roles,
-		IsAdmin: isAdmin,
+		User:     user,
+		Roles:    roles,
+		IsAdmin:  isAdmin,
+		NavItems: navItems,
 	}
 }
 

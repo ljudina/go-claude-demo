@@ -63,6 +63,10 @@ func SetupDefaultPolicies(e *casbin.Enforcer) error {
 		{"Admin", "/web/roles", "write"},
 		{"Admin", "/web/roles/*", "read"},
 		{"Admin", "/web/roles/*", "write"},
+		{"Admin", "/web/nav-items", "read"},
+		{"Admin", "/web/nav-items", "write"},
+		{"Admin", "/web/nav-items/*", "read"},
+		{"Admin", "/web/nav-items/*", "write"},
 		{"Admin", "/api/users", "read"},
 		{"Admin", "/api/users", "write"},
 		{"Admin", "/api/users/*", "read"},
@@ -87,6 +91,27 @@ func SetupDefaultPolicies(e *casbin.Enforcer) error {
 	for _, p := range userPolicies {
 		if _, err := e.AddPolicy(p); err != nil {
 			return fmt.Errorf("failed to add user policy: %w", err)
+		}
+	}
+
+	return e.SavePolicy()
+}
+
+// EnsureNavItemPolicies adds nav-items policies if they don't exist
+func EnsureNavItemPolicies(e *casbin.Enforcer) error {
+	navItemPolicies := [][]string{
+		{"Admin", "/web/nav-items", "read"},
+		{"Admin", "/web/nav-items", "write"},
+		{"Admin", "/web/nav-items/*", "read"},
+		{"Admin", "/web/nav-items/*", "write"},
+	}
+
+	for _, p := range navItemPolicies {
+		hasPolicy, _ := e.HasPolicy(p)
+		if !hasPolicy {
+			if _, err := e.AddPolicy(p); err != nil {
+				return fmt.Errorf("failed to add nav-item policy: %w", err)
+			}
 		}
 	}
 

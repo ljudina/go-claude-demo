@@ -8,6 +8,22 @@ import (
 	"database/sql"
 )
 
+type NavItem struct {
+	ID        int64
+	Name      string
+	Url       string
+	Icon      sql.NullString
+	ParentID  sql.NullInt64
+	SortOrder sql.NullInt64
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
+}
+
+type NavItemRole struct {
+	NavItemID int64
+	RoleID    int64
+}
+
 type Role struct {
 	ID          int64
 	Name        string

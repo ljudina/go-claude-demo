@@ -12,16 +12,18 @@ import (
 )
 
 type WebPolicyHandler struct {
-	enforcer    *casbin.Enforcer
-	roleService *service.RoleService
-	authHandler *handler.AuthHandler
+	enforcer       *casbin.Enforcer
+	roleService    *service.RoleService
+	navItemService *service.NavItemService
+	authHandler    *handler.AuthHandler
 }
 
-func NewWebPolicyHandler(enforcer *casbin.Enforcer, roleService *service.RoleService, authHandler *handler.AuthHandler) *WebPolicyHandler {
+func NewWebPolicyHandler(enforcer *casbin.Enforcer, roleService *service.RoleService, navItemService *service.NavItemService, authHandler *handler.AuthHandler) *WebPolicyHandler {
 	return &WebPolicyHandler{
-		enforcer:    enforcer,
-		roleService: roleService,
-		authHandler: authHandler,
+		enforcer:       enforcer,
+		roleService:    roleService,
+		navItemService: navItemService,
+		authHandler:    authHandler,
 	}
 }
 
@@ -40,10 +42,13 @@ func (h *WebPolicyHandler) getAuthInfo(r *http.Request) *templates.AuthInfo {
 		}
 	}
 
+	navItems, _ := h.navItemService.GetMenuForUser(r.Context(), user.ID)
+
 	return &templates.AuthInfo{
-		User:    user,
-		Roles:   roles,
-		IsAdmin: isAdmin,
+		User:     user,
+		Roles:    roles,
+		IsAdmin:  isAdmin,
+		NavItems: navItems,
 	}
 }
 

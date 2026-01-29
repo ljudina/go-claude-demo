@@ -1,0 +1,281 @@
+package templates
+
+import (
+	"claude-test/internal/domain"
+	"fmt"
+)
+
+// Icon name to SVG path mapping
+var iconMap = map[string]string{
+	"home":       `<path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M5 12l-2 0l9 -9l9 9l-2 0"></path><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"></path><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"></path>`,
+	"users":      `<path stroke="none" d="M0 0h24v24H0z" fill="none"></path><circle cx="12" cy="7" r="4"></circle><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>`,
+	"shield":     `<path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"></path>`,
+	"clipboard":  `<path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"></path><path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z"></path><path d="M9 12l.01 0"></path><path d="M13 12l2 0"></path><path d="M9 16l.01 0"></path><path d="M13 16l2 0"></path>`,
+	"settings":   `<path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z"></path><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path>`,
+	"menu":       `<path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h16"></path>`,
+	"folder":     `<path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2"></path>`,
+	"link":       `<path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M9 15l6 -6"></path><path d="M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464"></path><path d="M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463"></path>`,
+	"navigation": `<path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h12"></path>`,
+}
+
+// GetAvailableIcons returns all available icon names
+func GetAvailableIcons() []string {
+	return []string{"home", "users", "shield", "clipboard", "settings", "menu", "folder", "link", "navigation"}
+}
+
+// GetIconSVG returns the SVG content for an icon name
+func GetIconSVG(iconName string) string {
+	if svg, ok := iconMap[iconName]; ok {
+		return svg
+	}
+	return iconMap["link"] // default icon
+}
+
+templ NavItemsPage(items []*domain.NavItem, auth *AuthInfo) {
+	@Layout("Navigation Items", auth) {
+		<div class="page-header d-print-none">
+			<div class="row align-items-center">
+				<div class="col-auto">
+					<h2 class="page-title">Navigation Items</h2>
+				</div>
+				<div class="col-auto ms-auto">
+					<a href="/web/nav-items/new" class="btn btn-primary">
+						<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+							<path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+							<line x1="12" y1="5" x2="12" y2="19"></line>
+							<line x1="5" y1="12" x2="19" y2="12"></line>
+						</svg>
+						Add Navigation Item
+					</a>
+				</div>
+			</div>
+		</div>
+		<div class="card mt-3">
+			<div class="table-responsive">
+				<table class="table table-vcenter card-table">
+					<thead>
+						<tr>
+							<th>ID</th>
+							<th>Name</th>
+							<th>URL</th>
+							<th>Icon</th>
+							<th>Parent</th>
+							<th>Order</th>
+							<th>Roles</th>
+							<th class="w-1">Actions</th>
+						</tr>
+					</thead>
+					<tbody id="nav-items-table">
+						for _, item := range items {
+							@NavItemRow(item, items)
+						}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	}
+}
+
+templ NavItemRow(item *domain.NavItem, allItems []*domain.NavItem) {
+	<tr id={ fmt.Sprintf("nav-item-%d", item.ID) }>
+		<td>{ fmt.Sprintf("%d", item.ID) }</td>
+		<td>
+			<a href={ templ.SafeURL(fmt.Sprintf("/web/nav-items/%d/edit", item.ID)) } class="text-reset">
+				{ item.Name }
+			</a>
+		</td>
+		<td class="text-secondary">{ item.URL }</td>
+		<td>
+			if item.Icon != "" {
+				<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+					@templ.Raw(GetIconSVG(item.Icon))
+				</svg>
+				<span class="ms-1 text-secondary">{ item.Icon }</span>
+			} else {
+				<span class="text-muted">-</span>
+			}
+		</td>
+		<td>
+			if item.ParentID != nil {
+				{ getParentName(*item.ParentID, allItems) }
+			} else {
+				<span class="text-muted">-</span>
+			}
+		</td>
+		<td>{ fmt.Sprintf("%d", item.SortOrder) }</td>
+		<td>
+			if len(item.Roles) > 0 {
+				for i, role := range item.Roles {
+					<span class="badge bg-blue-lt">{ role.Name }</span>
+					if i < len(item.Roles) - 1 {
+						{ " " }
+					}
+				}
+			} else {
+				<span class="text-muted">No roles</span>
+			}
+		</td>
+		<td>
+			<div class="btn-list flex-nowrap">
+				<a href={ templ.SafeURL(fmt.Sprintf("/web/nav-items/%d/edit", item.ID)) } class="btn btn-sm">Edit</a>
+				<button
+					class="btn btn-sm btn-danger"
+					hx-delete={ fmt.Sprintf("/web/nav-items/%d", item.ID) }
+					hx-target={ fmt.Sprintf("#nav-item-%d", item.ID) }
+					hx-swap="outerHTML"
+					hx-confirm="Are you sure you want to delete this navigation item? This will also delete all child items."
+				>
+					Delete
+				</button>
+			</div>
+		</td>
+	</tr>
+}
+
+func getParentName(parentID int64, items []*domain.NavItem) string {
+	for _, item := range items {
+		if item.ID == parentID {
+			return item.Name
+		}
+	}
+	return fmt.Sprintf("ID: %d", parentID)
+}
+
+templ NavItemForm(item *domain.NavItem, isEdit bool, err string, roles []*domain.Role, parentItems []*domain.NavItem, auth *AuthInfo) {
+	@Layout(navItemFormTitle(isEdit), auth) {
+		<div class="page-header d-print-none">
+			<div class="row align-items-center">
+				<div class="col-auto">
+					<h2 class="page-title">{ navItemFormTitle(isEdit) }</h2>
+				</div>
+			</div>
+		</div>
+		<div class="card mt-3">
+			<div class="card-body">
+				if err != "" {
+					<div class="alert alert-danger" role="alert">{ err }</div>
+				}
+				<form
+					if isEdit {
+						hx-put={ fmt.Sprintf("/web/nav-items/%d", item.ID) }
+					} else {
+						hx-post="/web/nav-items"
+					}
+					hx-target="body"
+					hx-swap="innerHTML"
+				>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="mb-3">
+								<label class="form-label required" for="name">Name</label>
+								<input type="text" class="form-control" id="name" name="name" value={ item.Name } required placeholder="e.g., Dashboard"/>
+								<small class="form-hint">Display name shown in the navigation menu</small>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="mb-3">
+								<label class="form-label required" for="url">URL</label>
+								<input type="text" class="form-control" id="url" name="url" value={ item.URL } required placeholder="e.g., /web/dashboard"/>
+								<small class="form-hint">Route path for this navigation item</small>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-4">
+							<div class="mb-3">
+								<label class="form-label" for="icon">Icon</label>
+								<select class="form-select" id="icon" name="icon">
+									<option value="">No icon</option>
+									for _, iconName := range GetAvailableIcons() {
+										<option value={ iconName } selected?={ item.Icon == iconName }>{ iconName }</option>
+									}
+								</select>
+								<small class="form-hint">Icon displayed next to the menu item</small>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="mb-3">
+								<label class="form-label" for="parent_id">Parent Item</label>
+								<select class="form-select" id="parent_id" name="parent_id">
+									<option value="0">None (Top Level)</option>
+									for _, parent := range parentItems {
+										<option value={ fmt.Sprintf("%d", parent.ID) } selected?={ item.ParentID != nil && *item.ParentID == parent.ID }>{ parent.Name }</option>
+									}
+								</select>
+								<small class="form-hint">Parent menu item for dropdown grouping</small>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="mb-3">
+								<label class="form-label" for="sort_order">Sort Order</label>
+								<input type="number" class="form-control" id="sort_order" name="sort_order" value={ fmt.Sprintf("%d", item.SortOrder) } min="0"/>
+								<small class="form-hint">Lower numbers appear first</small>
+							</div>
+						</div>
+					</div>
+					<div class="mb-3">
+						<label class="form-label">Visible to Roles</label>
+						<div class="row">
+							for _, role := range roles {
+								<div class="col-md-4">
+									<label class="form-check">
+										<input type="checkbox" class="form-check-input" name="roles" value={ fmt.Sprintf("%d", role.ID) } checked?={ navItemHasRole(item.Roles, role.ID) }/>
+										<span class="form-check-label">{ role.Name }</span>
+										if role.Description != "" {
+											<span class="form-check-description">{ role.Description }</span>
+										}
+									</label>
+								</div>
+							}
+						</div>
+						<small class="form-hint">Users with any of these roles will see this menu item</small>
+					</div>
+					<div class="mb-0">
+						<button type="submit" class="btn btn-primary">
+							if isEdit {
+								Update
+							} else {
+								Create
+							}
+						</button>
+						<a href="/web/nav-items" class="btn btn-outline-secondary ms-2">Cancel</a>
+					</div>
+				</form>
+			</div>
+		</div>
+		<!-- Icon preview -->
+		<div class="card mt-3">
+			<div class="card-header">
+				<h3 class="card-title">Icon Preview</h3>
+			</div>
+			<div class="card-body">
+				<div class="row" id="icon-preview">
+					for _, iconName := range GetAvailableIcons() {
+						<div class="col-auto text-center p-3">
+							<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" width="32" height="32" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+								@templ.Raw(GetIconSVG(iconName))
+							</svg>
+							<div class="small text-muted mt-1">{ iconName }</div>
+						</div>
+					}
+				</div>
+			</div>
+		</div>
+	}
+}
+
+func navItemHasRole(roles []*domain.Role, roleID int64) bool {
+	for _, r := range roles {
+		if r.ID == roleID {
+			return true
+		}
+	}
+	return false
+}
+
+func navItemFormTitle(isEdit bool) string {
+	if isEdit {
+		return "Edit Navigation Item"
+	}
+	return "New Navigation Item"
+}

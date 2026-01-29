@@ -16,12 +16,13 @@ import (
 )
 
 type AuthHandler struct {
-	userService *service.UserService
-	roleRepo    domain.RoleRepository
-	store       *sessions.CookieStore
+	userService    *service.UserService
+	roleRepo       domain.RoleRepository
+	navItemRepo    domain.NavItemRepository
+	store          *sessions.CookieStore
 }
 
-func NewAuthHandler(userService *service.UserService, roleRepo domain.RoleRepository, sessionSecret string) *AuthHandler {
+func NewAuthHandler(userService *service.UserService, roleRepo domain.RoleRepository, navItemRepo domain.NavItemRepository, sessionSecret string) *AuthHandler {
 	store := sessions.NewCookieStore([]byte(sessionSecret))
 	store.Options = &sessions.Options{
 		Path:     "/",
@@ -33,6 +34,7 @@ func NewAuthHandler(userService *service.UserService, roleRepo domain.RoleReposi
 	return &AuthHandler{
 		userService: userService,
 		roleRepo:    roleRepo,
+		navItemRepo: navItemRepo,
 		store:       store,
 	}
 }
@@ -65,14 +67,56 @@ func (h *AuthHandler) Home(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 		}
+
+		// Get nav items for user's roles
+		roleIDs := make([]int64, len(roles))
+		for i, role := range roles {
+			roleIDs[i] = role.ID
+		}
+		navItems, _ := h.navItemRepo.GetVisibleForRoles(r.Context(), roleIDs)
+		navTree := buildNavTree(navItems)
+
 		auth = &templates.AuthInfo{
-			User:    user,
-			Roles:   roles,
-			IsAdmin: isAdmin,
+			User:     user,
+			Roles:    roles,
+			IsAdmin:  isAdmin,
+			NavItems: navTree,
 		}
 	}
 
 	templates.HomePage(user, auth).Render(r.Context(), w)
+}
+
+// buildNavTree converts a flat list of nav items into a tree structure
+func buildNavTree(items []*domain.NavItem) []*domain.NavItem {
+	if len(items) == 0 {
+		return items
+	}
+
+	// Create a map for quick lookup
+	itemMap := make(map[int64]*domain.NavItem)
+	for _, item := range items {
+		item.Children = []*domain.NavItem{} // Initialize children slice
+		itemMap[item.ID] = item
+	}
+
+	// Build the tree
+	var roots []*domain.NavItem
+	for _, item := range items {
+		if item.ParentID == nil {
+			roots = append(roots, item)
+		} else {
+			parent, exists := itemMap[*item.ParentID]
+			if exists {
+				parent.Children = append(parent.Children, item)
+			} else {
+				// Parent not in visible items, treat as root
+				roots = append(roots, item)
+			}
+		}
+	}
+
+	return roots
 }
 
 func (h *AuthHandler) BeginAuth(w http.ResponseWriter, r *http.Request) {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/gob"
 	"log"
@@ -19,6 +20,10 @@ import (
 	"claude-test/internal/repository"
 	"claude-test/internal/service"
 )
+
+func ctx() context.Context {
+	return context.Background()
+}
 
 func init() {
 	// Register types for session serialization
@@ -52,14 +57,26 @@ func main() {
 		log.Fatal("failed to setup default policies:", err)
 	}
 
+	// Ensure nav-items policies exist (for existing databases)
+	if err := authz.EnsureNavItemPolicies(enforcer); err != nil {
+		log.Fatal("failed to ensure nav-item policies:", err)
+	}
+
 	userRepo := repository.NewUserRepository(db)
 	roleRepo := repository.NewRoleRepository(db)
+	navItemRepo := repository.NewNavItemRepository(db)
 	userService := service.NewUserService(userRepo)
 	roleService := service.NewRoleService(roleRepo)
+	navItemService := service.NewNavItemService(navItemRepo, roleService)
+
+	// Seed default navigation items if none exist
+	if err := navItemService.SeedDefaultNavItems(ctx()); err != nil {
+		log.Fatal("failed to seed default nav items:", err)
+	}
 
 	// Auth handler
 	sessionSecret := os.Getenv("SESSION_SECRET")
-	authHandler := handler.NewAuthHandler(userService, roleRepo, sessionSecret)
+	authHandler := handler.NewAuthHandler(userService, roleRepo, navItemRepo, sessionSecret)
 
 	// Initialize Google OAuth
 	appURL := os.Getenv("APP_URL")
@@ -107,9 +124,10 @@ func main() {
 		})
 	})
 
-	webRoleHandler := webhandler.NewWebRoleHandler(roleService, authHandler)
-	webPolicyHandler := webhandler.NewWebPolicyHandler(enforcer, roleService, authHandler)
-	webUserHandler := webhandler.NewWebUserHandler(userService, roleService, authHandler)
+	webRoleHandler := webhandler.NewWebRoleHandler(roleService, navItemService, authHandler)
+	webPolicyHandler := webhandler.NewWebPolicyHandler(enforcer, roleService, navItemService, authHandler)
+	webUserHandler := webhandler.NewWebUserHandler(userService, roleService, navItemService, authHandler)
+	webNavItemHandler := webhandler.NewWebNavItemHandler(navItemService, roleService, authHandler)
 
 	// Web routes with authorization
 	routeHandler.Router().Route("/web", func(r chi.Router) {
@@ -142,6 +160,16 @@ func main() {
 			r.Get("/new", webPolicyHandler.NewPolicyForm)
 			r.Post("/", webPolicyHandler.CreatePolicy)
 			r.Delete("/", webPolicyHandler.DeletePolicy)
+		})
+
+		// Nav Items web
+		r.Route("/nav-items", func(r chi.Router) {
+			r.With(authzMiddleware.RequirePermission("read")).Get("/", webNavItemHandler.ListNavItems)
+			r.With(authzMiddleware.RequirePermission("write")).Get("/new", webNavItemHandler.NewNavItemForm)
+			r.With(authzMiddleware.RequirePermission("write")).Post("/", webNavItemHandler.CreateNavItem)
+			r.With(authzMiddleware.RequirePermission("read")).Get("/{id}/edit", webNavItemHandler.EditNavItemForm)
+			r.With(authzMiddleware.RequirePermission("write")).Put("/{id}", webNavItemHandler.UpdateNavItem)
+			r.With(authzMiddleware.RequirePermission("write")).Delete("/{id}", webNavItemHandler.DeleteNavItem)
 		})
 	})
 

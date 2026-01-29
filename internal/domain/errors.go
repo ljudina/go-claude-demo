@@ -10,4 +10,7 @@ var (
 	ErrRoleNotFound      = errors.New("role not found")
 	ErrRoleAlreadyExists = errors.New("role with this name already exists")
 	ErrInvalidRoleName   = errors.New("role name cannot be empty")
+	ErrNavItemNotFound   = errors.New("navigation item not found")
+	ErrInvalidNavItemName = errors.New("navigation item name cannot be empty")
+	ErrInvalidNavItemURL  = errors.New("navigation item URL cannot be empty")
 )
