@@ -1,4 +1,4 @@
-package handler
+package webhandler
 
 import (
 	"net/http"
@@ -7,34 +7,24 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"claude-test/internal/domain"
+	"claude-test/internal/handler"
 	"claude-test/internal/handler/templates"
 	"claude-test/internal/service"
 )
 
-type RoleWebHandler struct {
+type WebRoleHandler struct {
 	roleService *service.RoleService
-	authHandler *AuthHandler
+	authHandler *handler.AuthHandler
 }
 
-func NewRoleWebHandler(roleService *service.RoleService, authHandler *AuthHandler) *RoleWebHandler {
-	return &RoleWebHandler{
+func NewWebRoleHandler(roleService *service.RoleService, authHandler *handler.AuthHandler) *WebRoleHandler {
+	return &WebRoleHandler{
 		roleService: roleService,
 		authHandler: authHandler,
 	}
 }
 
-func (h *RoleWebHandler) RegisterRoutes(r chi.Router) {
-	r.Route("/web/roles", func(r chi.Router) {
-		r.Get("/", h.ListRoles)
-		r.Get("/new", h.NewRoleForm)
-		r.Post("/", h.CreateRole)
-		r.Get("/{id}/edit", h.EditRoleForm)
-		r.Put("/{id}", h.UpdateRole)
-		r.Delete("/{id}", h.DeleteRole)
-	})
-}
-
-func (h *RoleWebHandler) getAuthInfo(r *http.Request) *templates.AuthInfo {
+func (h *WebRoleHandler) getAuthInfo(r *http.Request) *templates.AuthInfo {
 	user := h.authHandler.GetCurrentUser(r)
 	if user == nil {
 		return nil
@@ -56,7 +46,7 @@ func (h *RoleWebHandler) getAuthInfo(r *http.Request) *templates.AuthInfo {
 	}
 }
 
-func (h *RoleWebHandler) ListRoles(w http.ResponseWriter, r *http.Request) {
+func (h *WebRoleHandler) ListRoles(w http.ResponseWriter, r *http.Request) {
 	auth := h.getAuthInfo(r)
 
 	roles, err := h.roleService.List(r.Context())
@@ -67,12 +57,12 @@ func (h *RoleWebHandler) ListRoles(w http.ResponseWriter, r *http.Request) {
 	templates.RolesPage(roles, auth).Render(r.Context(), w)
 }
 
-func (h *RoleWebHandler) NewRoleForm(w http.ResponseWriter, r *http.Request) {
+func (h *WebRoleHandler) NewRoleForm(w http.ResponseWriter, r *http.Request) {
 	auth := h.getAuthInfo(r)
 	templates.RoleForm(&domain.Role{}, false, "", auth).Render(r.Context(), w)
 }
 
-func (h *RoleWebHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
+func (h *WebRoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 	auth := h.getAuthInfo(r)
 
 	if err := r.ParseForm(); err != nil {
@@ -92,7 +82,7 @@ func (h *RoleWebHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 	h.ListRoles(w, r)
 }
 
-func (h *RoleWebHandler) EditRoleForm(w http.ResponseWriter, r *http.Request) {
+func (h *WebRoleHandler) EditRoleForm(w http.ResponseWriter, r *http.Request) {
 	auth := h.getAuthInfo(r)
 
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
@@ -110,7 +100,7 @@ func (h *RoleWebHandler) EditRoleForm(w http.ResponseWriter, r *http.Request) {
 	templates.RoleForm(role, true, "", auth).Render(r.Context(), w)
 }
 
-func (h *RoleWebHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
+func (h *WebRoleHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 	auth := h.getAuthInfo(r)
 
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
@@ -136,7 +126,7 @@ func (h *RoleWebHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 	h.ListRoles(w, r)
 }
 
-func (h *RoleWebHandler) DeleteRole(w http.ResponseWriter, r *http.Request) {
+func (h *WebRoleHandler) DeleteRole(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid role ID", http.StatusBadRequest)

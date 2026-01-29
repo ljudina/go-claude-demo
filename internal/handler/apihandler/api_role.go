@@ -1,4 +1,4 @@
-package handler
+package apihandler
 
 import (
 	"encoding/json"
@@ -7,35 +7,17 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 
 	"claude-test/internal/domain"
 	"claude-test/internal/service"
 )
 
-type RoleHandler struct {
+type ApiRoleHandler struct {
 	service *service.RoleService
 }
 
-func NewRoleHandler(service *service.RoleService) *RoleHandler {
-	return &RoleHandler{service: service}
-}
-
-func (h *RoleHandler) RegisterRoutes(r chi.Router) {
-	r.Route("/api/roles", func(r chi.Router) {
-		r.Use(middleware.SetHeader("Content-Type", "application/json"))
-		r.Post("/", h.Create)
-		r.Get("/", h.List)
-		r.Get("/{id}", h.GetByID)
-		r.Put("/{id}", h.Update)
-		r.Delete("/{id}", h.Delete)
-	})
-
-	r.Route("/api/users/{userId}/roles", func(r chi.Router) {
-		r.Use(middleware.SetHeader("Content-Type", "application/json"))
-		r.Get("/", h.GetUserRoles)
-		r.Put("/", h.SetUserRoles)
-	})
+func NewApiRoleHandler(service *service.RoleService) *ApiRoleHandler {
+	return &ApiRoleHandler{service: service}
 }
 
 type CreateRoleRequest struct {
@@ -58,7 +40,7 @@ type SetUserRolesRequest struct {
 	RoleIDs []int64 `json:"role_ids"`
 }
 
-func (h *RoleHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (h *ApiRoleHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req CreateRoleRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
@@ -74,7 +56,7 @@ func (h *RoleHandler) Create(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, toRoleResponse(role))
 }
 
-func (h *RoleHandler) GetByID(w http.ResponseWriter, r *http.Request) {
+func (h *ApiRoleHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid role id")
@@ -90,7 +72,7 @@ func (h *RoleHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toRoleResponse(role))
 }
 
-func (h *RoleHandler) List(w http.ResponseWriter, r *http.Request) {
+func (h *ApiRoleHandler) List(w http.ResponseWriter, r *http.Request) {
 	roles, err := h.service.List(r.Context())
 	if err != nil {
 		handleRoleError(w, err)
@@ -105,7 +87,7 @@ func (h *RoleHandler) List(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, response)
 }
 
-func (h *RoleHandler) Update(w http.ResponseWriter, r *http.Request) {
+func (h *ApiRoleHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid role id")
@@ -127,7 +109,7 @@ func (h *RoleHandler) Update(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toRoleResponse(role))
 }
 
-func (h *RoleHandler) Delete(w http.ResponseWriter, r *http.Request) {
+func (h *ApiRoleHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid role id")
@@ -142,7 +124,7 @@ func (h *RoleHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *RoleHandler) GetUserRoles(w http.ResponseWriter, r *http.Request) {
+func (h *ApiRoleHandler) GetUserRoles(w http.ResponseWriter, r *http.Request) {
 	userID, err := strconv.ParseInt(chi.URLParam(r, "userId"), 10, 64)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid user id")
@@ -163,7 +145,7 @@ func (h *RoleHandler) GetUserRoles(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, response)
 }
 
-func (h *RoleHandler) SetUserRoles(w http.ResponseWriter, r *http.Request) {
+func (h *ApiRoleHandler) SetUserRoles(w http.ResponseWriter, r *http.Request) {
 	userID, err := strconv.ParseInt(chi.URLParam(r, "userId"), 10, 64)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid user id")

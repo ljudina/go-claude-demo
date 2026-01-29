@@ -1,4 +1,4 @@
-package handler
+package webhandler
 
 import (
 	"net/http"
@@ -7,36 +7,26 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"claude-test/internal/domain"
+	"claude-test/internal/handler"
 	"claude-test/internal/handler/templates"
 	"claude-test/internal/service"
 )
 
-type WebHandler struct {
+type WebUserHandler struct {
 	userService *service.UserService
 	roleService *service.RoleService
-	authHandler *AuthHandler
+	authHandler *handler.AuthHandler
 }
 
-func NewWebHandler(userService *service.UserService, roleService *service.RoleService, authHandler *AuthHandler) *WebHandler {
-	return &WebHandler{
+func NewWebUserHandler(userService *service.UserService, roleService *service.RoleService, authHandler *handler.AuthHandler) *WebUserHandler {
+	return &WebUserHandler{
 		userService: userService,
 		roleService: roleService,
 		authHandler: authHandler,
 	}
 }
 
-func (h *WebHandler) RegisterRoutes(r chi.Router) {
-	r.Route("/web/users", func(r chi.Router) {
-		r.Get("/", h.ListUsers)
-		r.Get("/new", h.NewUserForm)
-		r.Post("/", h.CreateUser)
-		r.Get("/{id}/edit", h.EditUserForm)
-		r.Put("/{id}", h.UpdateUser)
-		r.Delete("/{id}", h.DeleteUser)
-	})
-}
-
-func (h *WebHandler) getAuthInfo(r *http.Request) *templates.AuthInfo {
+func (h *WebUserHandler) getAuthInfo(r *http.Request) *templates.AuthInfo {
 	user := h.authHandler.GetCurrentUser(r)
 	if user == nil {
 		return nil
@@ -58,7 +48,7 @@ func (h *WebHandler) getAuthInfo(r *http.Request) *templates.AuthInfo {
 	}
 }
 
-func (h *WebHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
+func (h *WebUserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	auth := h.getAuthInfo(r)
 
 	users, err := h.userService.List(r.Context())
@@ -79,13 +69,13 @@ func (h *WebHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	templates.UsersPage(usersWithRoles, auth).Render(r.Context(), w)
 }
 
-func (h *WebHandler) NewUserForm(w http.ResponseWriter, r *http.Request) {
+func (h *WebUserHandler) NewUserForm(w http.ResponseWriter, r *http.Request) {
 	auth := h.getAuthInfo(r)
 	allRoles, _ := h.roleService.List(r.Context())
 	templates.UserForm(&domain.User{}, nil, allRoles, false, "", auth).Render(r.Context(), w)
 }
 
-func (h *WebHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+func (h *WebUserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	auth := h.getAuthInfo(r)
 
 	if err := r.ParseForm(); err != nil {
@@ -112,7 +102,7 @@ func (h *WebHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	h.ListUsers(w, r)
 }
 
-func (h *WebHandler) EditUserForm(w http.ResponseWriter, r *http.Request) {
+func (h *WebUserHandler) EditUserForm(w http.ResponseWriter, r *http.Request) {
 	auth := h.getAuthInfo(r)
 
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
@@ -137,7 +127,7 @@ func (h *WebHandler) EditUserForm(w http.ResponseWriter, r *http.Request) {
 	templates.UserForm(user, userRoleIDs, allRoles, true, "", auth).Render(r.Context(), w)
 }
 
-func (h *WebHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+func (h *WebUserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	auth := h.getAuthInfo(r)
 
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
@@ -168,7 +158,7 @@ func (h *WebHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	h.ListUsers(w, r)
 }
 
-func (h *WebHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+func (h *WebUserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)

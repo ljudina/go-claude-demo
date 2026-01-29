@@ -1,4 +1,4 @@
-package handler
+package apihandler
 
 import (
 	"encoding/json"
@@ -8,29 +8,17 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 
 	"claude-test/internal/domain"
 	"claude-test/internal/service"
 )
 
-type UserHandler struct {
+type ApiUserHandler struct {
 	service *service.UserService
 }
 
-func NewUserHandler(service *service.UserService) *UserHandler {
-	return &UserHandler{service: service}
-}
-
-func (h *UserHandler) RegisterRoutes(r chi.Router) {
-	r.Route("/api/users", func(r chi.Router) {
-		r.Use(middleware.SetHeader("Content-Type", "application/json"))
-		r.Post("/", h.Create)
-		r.Get("/", h.List)
-		r.Get("/{id}", h.GetByID)
-		r.Put("/{id}", h.Update)
-		r.Delete("/{id}", h.Delete)
-	})
+func NewApiUserHandler(service *service.UserService) *ApiUserHandler {
+	return &ApiUserHandler{service: service}
 }
 
 type CreateUserRequest struct {
@@ -55,7 +43,7 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (h *ApiUserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
@@ -71,7 +59,7 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, toUserResponse(user))
 }
 
-func (h *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) {
+func (h *ApiUserHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid user id")
@@ -87,7 +75,7 @@ func (h *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toUserResponse(user))
 }
 
-func (h *UserHandler) List(w http.ResponseWriter, r *http.Request) {
+func (h *ApiUserHandler) List(w http.ResponseWriter, r *http.Request) {
 	users, err := h.service.List(r.Context())
 	if err != nil {
 		handleServiceError(w, err)
@@ -102,7 +90,7 @@ func (h *UserHandler) List(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, response)
 }
 
-func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
+func (h *ApiUserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid user id")
@@ -124,7 +112,7 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toUserResponse(user))
 }
 
-func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
+func (h *ApiUserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid user id")

@@ -1,4 +1,4 @@
-package handler
+package webhandler
 
 import (
 	"net/http"
@@ -6,25 +6,26 @@ import (
 	"github.com/casbin/casbin/v3"
 
 	"claude-test/internal/domain"
+	"claude-test/internal/handler"
 	"claude-test/internal/handler/templates"
 	"claude-test/internal/service"
 )
 
-type PolicyWebHandler struct {
+type WebPolicyHandler struct {
 	enforcer    *casbin.Enforcer
 	roleService *service.RoleService
-	authHandler *AuthHandler
+	authHandler *handler.AuthHandler
 }
 
-func NewPolicyWebHandler(enforcer *casbin.Enforcer, roleService *service.RoleService, authHandler *AuthHandler) *PolicyWebHandler {
-	return &PolicyWebHandler{
+func NewWebPolicyHandler(enforcer *casbin.Enforcer, roleService *service.RoleService, authHandler *handler.AuthHandler) *WebPolicyHandler {
+	return &WebPolicyHandler{
 		enforcer:    enforcer,
 		roleService: roleService,
 		authHandler: authHandler,
 	}
 }
 
-func (h *PolicyWebHandler) getAuthInfo(r *http.Request) *templates.AuthInfo {
+func (h *WebPolicyHandler) getAuthInfo(r *http.Request) *templates.AuthInfo {
 	user := h.authHandler.GetCurrentUser(r)
 	if user == nil {
 		return nil
@@ -46,7 +47,7 @@ func (h *PolicyWebHandler) getAuthInfo(r *http.Request) *templates.AuthInfo {
 	}
 }
 
-func (h *PolicyWebHandler) ListPolicies(w http.ResponseWriter, r *http.Request) {
+func (h *WebPolicyHandler) ListPolicies(w http.ResponseWriter, r *http.Request) {
 	auth := h.getAuthInfo(r)
 
 	rawPolicies, _ := h.enforcer.GetPolicy()
@@ -67,13 +68,13 @@ func (h *PolicyWebHandler) ListPolicies(w http.ResponseWriter, r *http.Request) 
 	templates.PoliciesPage(policies, roles, auth).Render(r.Context(), w)
 }
 
-func (h *PolicyWebHandler) NewPolicyForm(w http.ResponseWriter, r *http.Request) {
+func (h *WebPolicyHandler) NewPolicyForm(w http.ResponseWriter, r *http.Request) {
 	auth := h.getAuthInfo(r)
 	roles, _ := h.roleService.List(r.Context())
 	templates.PolicyForm(&domain.Policy{}, roles, "", auth).Render(r.Context(), w)
 }
 
-func (h *PolicyWebHandler) CreatePolicy(w http.ResponseWriter, r *http.Request) {
+func (h *WebPolicyHandler) CreatePolicy(w http.ResponseWriter, r *http.Request) {
 	auth := h.getAuthInfo(r)
 
 	if err := r.ParseForm(); err != nil {
@@ -114,7 +115,7 @@ func (h *PolicyWebHandler) CreatePolicy(w http.ResponseWriter, r *http.Request) 
 	h.ListPolicies(w, r)
 }
 
-func (h *PolicyWebHandler) DeletePolicy(w http.ResponseWriter, r *http.Request) {
+func (h *WebPolicyHandler) DeletePolicy(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Invalid form data", http.StatusBadRequest)
 		return

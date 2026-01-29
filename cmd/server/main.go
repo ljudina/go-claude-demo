@@ -14,6 +14,8 @@ import (
 	"claude-test/internal/database"
 	"claude-test/internal/domain"
 	"claude-test/internal/handler"
+	"claude-test/internal/handler/apihandler"
+	"claude-test/internal/handler/webhandler"
 	"claude-test/internal/repository"
 	"claude-test/internal/service"
 )
@@ -67,20 +69,18 @@ func main() {
 		appURL,
 	)
 
-	// Create authorization middleware
-	roleGetter := authz.NewRoleService(roleService)
-	authzMiddleware := authz.NewMiddleware(enforcer, authHandler, roleGetter)
-
-	userHandler := handler.NewUserHandler(userService)
-	roleHandler := handler.NewRoleHandler(roleService)
-	webHandler := handler.NewWebHandler(userService, roleService, authHandler)
-	roleWebHandler := handler.NewRoleWebHandler(roleService, authHandler)
-	policyWebHandler := handler.NewPolicyWebHandler(enforcer, roleService, authHandler)
+	apiUserHandler := apihandler.NewApiUserHandler(userService)
+	apiRoleHandler := apihandler.NewApiRoleHandler(roleService)
 
 	routeHandler := handler.NewRouteHandler()
 
 	// Public routes (auth)
 	routeHandler.AddRoute(authHandler)
+
+	// Create authorization middleware
+	roleGetter := authz.NewRoleService(roleService)
+
+	authzMiddleware := authz.NewMiddleware(enforcer, authHandler, roleGetter)
 
 	// API routes with authorization
 	routeHandler.Router().Route("/api", func(r chi.Router) {
@@ -88,24 +88,28 @@ func main() {
 
 		// Users API
 		r.Route("/users", func(r chi.Router) {
-			r.With(authzMiddleware.RequirePermission("read")).Get("/", userHandler.List)
-			r.With(authzMiddleware.RequirePermission("write")).Post("/", userHandler.Create)
-			r.With(authzMiddleware.RequirePermission("read")).Get("/{id}", userHandler.GetByID)
-			r.With(authzMiddleware.RequirePermission("write")).Put("/{id}", userHandler.Update)
-			r.With(authzMiddleware.RequirePermission("write")).Delete("/{id}", userHandler.Delete)
-			r.With(authzMiddleware.RequirePermission("read")).Get("/{userId}/roles", roleHandler.GetUserRoles)
-			r.With(authzMiddleware.RequirePermission("write")).Put("/{userId}/roles", roleHandler.SetUserRoles)
+			r.With(authzMiddleware.RequirePermission("read")).Get("/", apiUserHandler.List)
+			r.With(authzMiddleware.RequirePermission("write")).Post("/", apiUserHandler.Create)
+			r.With(authzMiddleware.RequirePermission("read")).Get("/{id}", apiUserHandler.GetByID)
+			r.With(authzMiddleware.RequirePermission("write")).Put("/{id}", apiUserHandler.Update)
+			r.With(authzMiddleware.RequirePermission("write")).Delete("/{id}", apiUserHandler.Delete)
+			r.With(authzMiddleware.RequirePermission("read")).Get("/{userId}/roles", apiRoleHandler.GetUserRoles)
+			r.With(authzMiddleware.RequirePermission("write")).Put("/{userId}/roles", apiRoleHandler.SetUserRoles)
 		})
 
 		// Roles API
 		r.Route("/roles", func(r chi.Router) {
-			r.With(authzMiddleware.RequirePermission("read")).Get("/", roleHandler.List)
-			r.With(authzMiddleware.RequirePermission("write")).Post("/", roleHandler.Create)
-			r.With(authzMiddleware.RequirePermission("read")).Get("/{id}", roleHandler.GetByID)
-			r.With(authzMiddleware.RequirePermission("write")).Put("/{id}", roleHandler.Update)
-			r.With(authzMiddleware.RequirePermission("write")).Delete("/{id}", roleHandler.Delete)
+			r.With(authzMiddleware.RequirePermission("read")).Get("/", apiRoleHandler.List)
+			r.With(authzMiddleware.RequirePermission("write")).Post("/", apiRoleHandler.Create)
+			r.With(authzMiddleware.RequirePermission("read")).Get("/{id}", apiRoleHandler.GetByID)
+			r.With(authzMiddleware.RequirePermission("write")).Put("/{id}", apiRoleHandler.Update)
+			r.With(authzMiddleware.RequirePermission("write")).Delete("/{id}", apiRoleHandler.Delete)
 		})
 	})
+
+	webRoleHandler := webhandler.NewWebRoleHandler(roleService, authHandler)
+	webPolicyHandler := webhandler.NewWebPolicyHandler(enforcer, roleService, authHandler)
+	webUserHandler := webhandler.NewWebUserHandler(userService, roleService, authHandler)
 
 	// Web routes with authorization
 	routeHandler.Router().Route("/web", func(r chi.Router) {
@@ -113,31 +117,31 @@ func main() {
 
 		// Users web
 		r.Route("/users", func(r chi.Router) {
-			r.With(authzMiddleware.RequirePermission("read")).Get("/", webHandler.ListUsers)
-			r.With(authzMiddleware.RequirePermission("write")).Get("/new", webHandler.NewUserForm)
-			r.With(authzMiddleware.RequirePermission("write")).Post("/", webHandler.CreateUser)
-			r.With(authzMiddleware.RequirePermission("read")).Get("/{id}/edit", webHandler.EditUserForm)
-			r.With(authzMiddleware.RequirePermission("write")).Put("/{id}", webHandler.UpdateUser)
-			r.With(authzMiddleware.RequirePermission("write")).Delete("/{id}", webHandler.DeleteUser)
+			r.With(authzMiddleware.RequirePermission("read")).Get("/", webUserHandler.ListUsers)
+			r.With(authzMiddleware.RequirePermission("write")).Get("/new", webUserHandler.NewUserForm)
+			r.With(authzMiddleware.RequirePermission("write")).Post("/", webUserHandler.CreateUser)
+			r.With(authzMiddleware.RequirePermission("read")).Get("/{id}/edit", webUserHandler.EditUserForm)
+			r.With(authzMiddleware.RequirePermission("write")).Put("/{id}", webUserHandler.UpdateUser)
+			r.With(authzMiddleware.RequirePermission("write")).Delete("/{id}", webUserHandler.DeleteUser)
 		})
 
 		// Roles web
 		r.Route("/roles", func(r chi.Router) {
-			r.With(authzMiddleware.RequirePermission("read")).Get("/", roleWebHandler.ListRoles)
-			r.With(authzMiddleware.RequirePermission("write")).Get("/new", roleWebHandler.NewRoleForm)
-			r.With(authzMiddleware.RequirePermission("write")).Post("/", roleWebHandler.CreateRole)
-			r.With(authzMiddleware.RequirePermission("read")).Get("/{id}/edit", roleWebHandler.EditRoleForm)
-			r.With(authzMiddleware.RequirePermission("write")).Put("/{id}", roleWebHandler.UpdateRole)
-			r.With(authzMiddleware.RequirePermission("write")).Delete("/{id}", roleWebHandler.DeleteRole)
+			r.With(authzMiddleware.RequirePermission("read")).Get("/", webRoleHandler.ListRoles)
+			r.With(authzMiddleware.RequirePermission("write")).Get("/new", webRoleHandler.NewRoleForm)
+			r.With(authzMiddleware.RequirePermission("write")).Post("/", webRoleHandler.CreateRole)
+			r.With(authzMiddleware.RequirePermission("read")).Get("/{id}/edit", webRoleHandler.EditRoleForm)
+			r.With(authzMiddleware.RequirePermission("write")).Put("/{id}", webRoleHandler.UpdateRole)
+			r.With(authzMiddleware.RequirePermission("write")).Delete("/{id}", webRoleHandler.DeleteRole)
 		})
 
 		// Policies web (Admin only)
 		r.Route("/policies", func(r chi.Router) {
 			r.Use(authzMiddleware.RequireRole("Admin"))
-			r.Get("/", policyWebHandler.ListPolicies)
-			r.Get("/new", policyWebHandler.NewPolicyForm)
-			r.Post("/", policyWebHandler.CreatePolicy)
-			r.Delete("/", policyWebHandler.DeletePolicy)
+			r.Get("/", webPolicyHandler.ListPolicies)
+			r.Get("/new", webPolicyHandler.NewPolicyForm)
+			r.Post("/", webPolicyHandler.CreatePolicy)
+			r.Delete("/", webPolicyHandler.DeletePolicy)
 		})
 	})
 
